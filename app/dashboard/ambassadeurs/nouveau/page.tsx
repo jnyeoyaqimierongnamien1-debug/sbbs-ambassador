@@ -34,7 +34,7 @@ export default function NouvelAmbassadeurPage() {
     const { error } = await supabase.from("ambassadeurs").insert([form]);
 
     if (error) {
-      setError("Erreur lors de l'enregistrement. Réessaye.");
+      setError(error.message);
       setLoading(false);
       return;
     }
