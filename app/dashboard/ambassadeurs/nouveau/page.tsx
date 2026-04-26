@@ -10,7 +10,8 @@ export default function NouvelAmbassadeurPage() {
     prenom: "",
     telephone: "",
     email: "",
-    ville: "",
+    zone: "",
+    branche: "",
     statut: "actif",
   });
   const [loading, setLoading] = useState(false);
@@ -57,7 +58,8 @@ export default function NouvelAmbassadeurPage() {
             { label: "Nom", name: "nom", type: "text", placeholder: "ex: KONAN" },
             { label: "Téléphone", name: "telephone", type: "tel", placeholder: "ex: 07 00 00 00 00" },
             { label: "Email", name: "email", type: "email", placeholder: "ex: kouame@email.com" },
-            { label: "Ville", name: "ville", type: "text", placeholder: "ex: Abidjan" },
+            { label: "Zone / Ville", name: "zone", type: "text", placeholder: "ex: Abidjan" },
+            { label: "Branche SBBS", name: "branche", type: "text", placeholder: "ex: SBBS Certification" },
           ].map((field) => (
             <div key={field.name}>
               <label className="block text-sm font-medium text-gray-700 mb-1">{field.label}</label>
