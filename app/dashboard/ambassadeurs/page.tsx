@@ -10,7 +10,8 @@ type Ambassadeur = {
   prenom: string;
   telephone: string;
   email: string;
-  ville: string;
+  zone: string;
+  branche: string;
   statut: string;
   created_at: string;
 };
@@ -39,7 +40,7 @@ export default function AmbassadeursPage() {
   }, []);
 
   const filtered = ambassadeurs.filter((a) =>
-    `${a.nom} ${a.prenom} ${a.ville} ${a.telephone}`
+    `${a.nom} ${a.prenom} ${a.zone} ${a.telephone}`
       .toLowerCase()
       .includes(search.toLowerCase())
   );
@@ -86,7 +87,7 @@ export default function AmbassadeursPage() {
                 <tr>
                   <th className="px-4 py-3 text-left">Nom & Prénom</th>
                   <th className="px-4 py-3 text-left">Téléphone</th>
-                  <th className="px-4 py-3 text-left">Ville</th>
+                  <th className="px-4 py-3 text-left">Zone / Ville</th>
                   <th className="px-4 py-3 text-left">Statut</th>
                   <th className="px-4 py-3 text-left">Action</th>
                 </tr>
@@ -96,7 +97,7 @@ export default function AmbassadeursPage() {
                   <tr key={a.id} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
                     <td className="px-4 py-3 font-medium">{a.prenom} {a.nom}</td>
                     <td className="px-4 py-3">{a.telephone}</td>
-                    <td className="px-4 py-3">{a.ville}</td>
+                    <td className="px-4 py-3">{a.zone}</td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
                         a.statut === "actif"
