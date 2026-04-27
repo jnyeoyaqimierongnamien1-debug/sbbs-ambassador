@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 type Stats = {
   totalAmbassadeurs: number;
-  totalParrainages: number;
+  totalFilleuls: number;
   commissionsEnAttente: number;
   commissionsPayees: number;
 };
@@ -14,7 +14,7 @@ type Stats = {
 export default function DashboardPage() {
   const [stats, setStats] = useState<Stats>({
     totalAmbassadeurs: 0,
-    totalParrainages: 0,
+    totalFilleuls: 0,
     commissionsEnAttente: 0,
     commissionsPayees: 0,
   });
@@ -32,25 +32,25 @@ export default function DashboardPage() {
 
       const [
         { count: totalAmbassadeurs },
-        { count: totalParrainages },
+        { count: totalFilleuls },
         { data: commissionsData },
       ] = await Promise.all([
         supabase.from("ambassadeurs").select("*", { count: "exact", head: true }),
-        supabase.from("parrainages").select("*", { count: "exact", head: true }),
+        supabase.from("filleuls").select("*", { count: "exact", head: true }),
         supabase.from("commissions").select("montant, statut"),
       ]);
 
       const commissionsEnAttente = commissionsData
-        ?.filter((c) => c.statut === "en_attente")
+        ?.filter((c) => c.statut === "En attente")
         .reduce((sum, c) => sum + c.montant, 0) ?? 0;
 
       const commissionsPayees = commissionsData
-        ?.filter((c) => c.statut === "payee")
+        ?.filter((c) => c.statut === "Payée")
         .reduce((sum, c) => sum + c.montant, 0) ?? 0;
 
       setStats({
         totalAmbassadeurs: totalAmbassadeurs ?? 0,
-        totalParrainages: totalParrainages ?? 0,
+        totalFilleuls: totalFilleuls ?? 0,
         commissionsEnAttente,
         commissionsPayees,
       });
@@ -107,10 +107,10 @@ export default function DashboardPage() {
             icon="👥"
           />
           <StatCard
-            label="Parrainages"
-            value={stats.totalParrainages}
+            label="Filleuls"
+            value={stats.totalFilleuls}
             color="gold"
-            icon="🤝"
+            icon="🎓"
           />
           <StatCard
             label="Commissions en attente"
