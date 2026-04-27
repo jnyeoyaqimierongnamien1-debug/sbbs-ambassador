@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation";
 
 type Filleul = {
   id: string;
-  filleul_nom: string;
-  filleul_prenom: string;
-  filleul_telephone: string;
+  nom: string;
+  prenom: string;
+  telephone: string;
   formation: string;
   statut: string;
   created_at: string;
@@ -27,9 +27,9 @@ export default function FilleulsPage() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     ambassadeur_id: "",
-    filleul_nom: "",
-    filleul_prenom: "",
-    filleul_telephone: "",
+    nom: "",
+    prenom: "",
+    telephone: "",
     formation: "",
     statut: "en_attente",
   });
@@ -59,7 +59,7 @@ export default function FilleulsPage() {
   };
 
   const handleSubmit = async () => {
-    if (!form.ambassadeur_id || !form.filleul_nom || !form.filleul_prenom || !form.formation) {
+    if (!form.ambassadeur_id || !form.nom || !form.prenom || !form.formation) {
       setError("Ambassadeur, prénom, nom et formation sont obligatoires.");
       return;
     }
@@ -75,13 +75,13 @@ export default function FilleulsPage() {
     }
 
     setFilleuls([data, ...filleuls]);
-    setForm({ ambassadeur_id: "", filleul_nom: "", filleul_prenom: "", filleul_telephone: "", formation: "", statut: "en_attente" });
+    setForm({ ambassadeur_id: "", nom: "", prenom: "", telephone: "", formation: "", statut: "en_attente" });
     setShowForm(false);
     setSaving(false);
   };
 
   const filtered = filleuls.filter((f) =>
-    `${f.filleul_nom} ${f.filleul_prenom} ${f.formation}`.toLowerCase().includes(search.toLowerCase())
+    `${f.nom} ${f.prenom} ${f.formation}`.toLowerCase().includes(search.toLowerCase())
   );
 
   const statutColor: Record<string, string> = {
@@ -124,9 +124,9 @@ export default function FilleulsPage() {
                 </select>
               </div>
               {[
-                { label: "Prénom *", name: "filleul_prenom", placeholder: "ex: Kouamé" },
-                { label: "Nom *", name: "filleul_nom", placeholder: "ex: KONAN" },
-                { label: "Téléphone", name: "filleul_telephone", placeholder: "ex: 07 00 00 00 00" },
+                { label: "Prénom *", name: "prenom", placeholder: "ex: Kouamé" },
+                { label: "Nom *", name: "nom", placeholder: "ex: KONAN" },
+                { label: "Téléphone", name: "telephone", placeholder: "ex: 07 00 00 00 00" },
                 { label: "Formation *", name: "formation", placeholder: "ex: BTS Marketing" },
               ].map((field) => (
                 <div key={field.name}>
@@ -182,10 +182,10 @@ export default function FilleulsPage() {
               <tbody>
                 {filtered.map((f, i) => (
                   <tr key={f.id} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                    <td className="px-4 py-3 font-medium">{f.filleul_prenom} {f.filleul_nom}</td>
+                    <td className="px-4 py-3 font-medium">{f.prenom} {f.nom}</td>
                     <td className="px-4 py-3">{f.formation}</td>
                     <td className="px-4 py-3">{f.ambassadeurs?.prenom} {f.ambassadeurs?.nom}</td>
-                    <td className="px-4 py-3">{f.filleul_telephone || "—"}</td>
+                    <td className="px-4 py-3">{f.telephone || "—"}</td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-1 rounded-full text-xs font-semibold ${statutColor[f.statut] ?? "bg-gray-100 text-gray-500"}`}>
                         {f.statut}
