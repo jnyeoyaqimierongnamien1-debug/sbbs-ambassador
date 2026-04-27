@@ -59,14 +59,20 @@ export default function CommissionsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-sbbs-blue text-white px-6 py-4 flex items-center gap-4 shadow-md">
-        <button onClick={() => router.push("/dashboard")} className="hover:text-sbbs-gold transition">
-          ← Retour
-        </button>
-        <div className="flex items-center gap-2">
-          <img src="/LOGO%20SBBS%20PNG.webp" alt="SBBS" className="w-8 h-8 rounded-full object-cover border-2 border-sbbs-gold" />
-          <h1 className="font-bold text-lg">Commissions</h1>
+      <header className="bg-sbbs-blue text-white px-6 py-4 flex items-center justify-between shadow-md">
+        <div className="flex items-center gap-4">
+          <button onClick={() => router.push("/dashboard")} className="hover:text-sbbs-gold transition">
+            ← Retour
+          </button>
+          <div className="flex items-center gap-2">
+            <img src="/LOGO%20SBBS%20PNG.webp" alt="SBBS" className="w-8 h-8 rounded-full object-cover border-2 border-sbbs-gold" />
+            <h1 className="font-bold text-lg">Commissions</h1>
+          </div>
         </div>
+        <button onClick={() => router.push("/dashboard/commissions/nouveau")}
+          className="bg-sbbs-gold text-white px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-yellow-500 transition">
+          + Nouvelle commission
+        </button>
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-8">
@@ -115,7 +121,7 @@ export default function CommissionsPage() {
                   <th className="px-4 py-3 text-left">Montant vente</th>
                   <th className="px-4 py-3 text-left">Commission</th>
                   <th className="px-4 py-3 text-left">Statut</th>
-                  <th className="px-4 py-3 text-left">Action</th>
+                  <th className="px-4 py-3 text-left">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -135,12 +141,29 @@ export default function CommissionsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      {c.statut_paiement === "En attente" && (
-                        <button onClick={() => handleValider(c.id)}
-                          className="text-green-600 hover:underline text-sm font-medium">
-                          Valider ✓
+                      <div className="flex gap-2 flex-wrap">
+                        {c.statut_paiement === "En attente" && (
+                          <button onClick={() => handleValider(c.id)}
+                            className="text-green-600 hover:underline text-xs font-medium">
+                            ✅ Valider
+                          </button>
+                        )}
+                        {c.statut_paiement === "Payé" && (
+                          <button onClick={async () => {
+                            await supabase.from("commissions").update({ statut_paiement: "En attente" }).eq("id", c.id);
+                            setCommissions((prev) => prev.map((x) => x.id === c.id ? { ...x, statut_paiement: "En attente" } : x));
+                          }} className="text-yellow-600 hover:underline text-xs font-medium">
+                            ↩️ Annuler
+                          </button>
+                        )}
+                        <button onClick={async () => {
+                          if (!confirm("Supprimer cette commission ?")) return;
+                          await supabase.from("commissions").delete().eq("id", c.id);
+                          setCommissions((prev) => prev.filter((x) => x.id !== c.id));
+                        }} className="text-sbbs-red hover:underline text-xs font-medium">
+                          🗑️ Supprimer
                         </button>
-                      )}
+                      </div>
                     </td>
                   </tr>
                 ))}
