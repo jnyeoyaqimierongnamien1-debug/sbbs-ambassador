@@ -80,9 +80,7 @@ export default function DashboardPage() {
       {/* Header */}
       <header className="bg-sbbs-blue text-white px-6 py-4 flex items-center justify-between shadow-md">
         <div className="flex items-center gap-3">
-          <div className="bg-sbbs-gold rounded-full w-9 h-9 flex items-center justify-center">
-            <span className="text-white font-bold text-lg">S</span>
-          </div>
+          <img src="/LOGO_SBBS_PNG.webp" alt="SBBS" className="w-10 h-10 rounded-full object-cover border-2 border-sbbs-gold" />
           <div>
             <h1 className="font-bold text-lg leading-none">SBBS Ambassador</h1>
             <p className="text-xs text-blue-200">Tableau de bord</p>
@@ -148,6 +146,12 @@ export default function DashboardPage() {
             description="Gérer et valider les paiements"
             href="/dashboard/commissions"
             icon="💰"
+          />
+          <NavCard
+            title="Statistiques"
+            description="Graphiques et analyses en temps réel"
+            href="/dashboard/statistiques"
+            icon="📊"
           />
         </div>
       </main>
