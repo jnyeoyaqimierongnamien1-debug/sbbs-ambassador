@@ -14,8 +14,63 @@ type StatData = {
   commissionsEnAttente: number;
   parBranche: { branche: string; count: number }[];
   parZone: { zone: string; count: number }[];
-  evolutionMois: { mois: string; count: number }[];
+  parNiveau: { niveau: string; count: number }[];
 };
+
+const COLORS = ["#1A3A6C", "#C9A84C", "#CC0000", "#1d9e75", "#2a5499", "#e8c96a"];
+
+function DonutChart({ data, labels, colors }: { data: number[]; labels: string[]; colors: string[] }) {
+  const total = data.reduce((a, b) => a + b, 0);
+  if (total === 0) return <p className="text-gray-400 text-sm text-center py-4">Aucune donnée</p>;
+
+  let cumulative = 0;
+  const segments = data.map((val, i) => {
+    const pct = val / total;
+    const start = cumulative;
+    cumulative += pct;
+    return { val, pct, start, color: colors[i % colors.length], label: labels[i] };
+  });
+
+  const radius = 60;
+  const cx = 80;
+  const cy = 80;
+
+  function polarToCartesian(angle: number, r: number) {
+    const rad = (angle - 90) * (Math.PI / 180);
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+  }
+
+  function arcPath(start: number, end: number) {
+    const s = polarToCartesian(start * 360, radius);
+    const e = polarToCartesian(end * 360, radius);
+    const large = end - start > 0.5 ? 1 : 0;
+    const si = polarToCartesian(start * 360, 36);
+    const ei = polarToCartesian(end * 360, 36);
+    return `M ${s.x} ${s.y} A ${radius} ${radius} 0 ${large} 1 ${e.x} ${e.y} L ${ei.x} ${ei.y} A 36 36 0 ${large} 0 ${si.x} ${si.y} Z`;
+  }
+
+  return (
+    <div className="flex items-center gap-4 flex-wrap">
+      <svg width="160" height="160" viewBox="0 0 160 160">
+        {segments.map((seg, i) => (
+          <path key={i} d={arcPath(seg.start, seg.start + seg.pct)} fill={seg.color} stroke="white" strokeWidth="2" />
+        ))}
+        <text x={cx} y={cy - 6} textAnchor="middle" fontSize="18" fontWeight="bold" fill="#1A3A6C">{total}</text>
+        <text x={cx} y={cy + 12} textAnchor="middle" fontSize="10" fill="#7080a0">total</text>
+      </svg>
+      <div className="space-y-2 flex-1">
+        {segments.map((seg, i) => (
+          <div key={i} className="flex items-center gap-2 text-sm">
+            <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: seg.color }} />
+            <span className="text-gray-600 flex-1">{seg.label}</span>
+            <span className="font-bold text-sbbs-blue">{seg.val}</span>
+            <span className="text-gray-400">({Math.round(seg.pct * 100)}%)</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function StatistiquesPage() {
   const [stats, setStats] = useState<StatData | null>(null);
@@ -35,45 +90,46 @@ export default function StatistiquesPage() {
       ] = await Promise.all([
         supabase.from("ambassadeurs").select("*"),
         supabase.from("filleuls").select("*"),
-        supabase.from("commissions").select("*"),
+        supabase.from("commissions").select("montant_commission, statut_paiement"),
       ]);
 
       const amb = ambassadeurs ?? [];
       const fill = filleuls ?? [];
       const comm = commissions ?? [];
 
-      // Par branche
       const brancheMap: Record<string, number> = {};
       amb.forEach((a) => {
         const b = a.branche || "Non défini";
         brancheMap[b] = (brancheMap[b] || 0) + 1;
       });
 
-      // Par zone
       const zoneMap: Record<string, number> = {};
       amb.forEach((a) => {
         const z = a.zone || "Non défini";
         zoneMap[z] = (zoneMap[z] || 0) + 1;
       });
 
-      // Evolution par mois
-      const moisMap: Record<string, number> = {};
+      const niveauMap: Record<string, number> = {};
       amb.forEach((a) => {
-        const mois = new Date(a.created_at).toLocaleDateString("fr-FR", { month: "short", year: "2-digit" });
-        moisMap[mois] = (moisMap[mois] || 0) + 1;
+        const n = a.niveau || "Débutant";
+        niveauMap[n] = (niveauMap[n] || 0) + 1;
       });
+
+      const totalComm = comm.reduce((s, c) => s + (Number(c.montant_commission) || 0), 0);
+      const payees = comm.filter((c) => c.statut_paiement === "Payé").reduce((s, c) => s + (Number(c.montant_commission) || 0), 0);
+      const enAttente = comm.filter((c) => c.statut_paiement === "En attente").reduce((s, c) => s + (Number(c.montant_commission) || 0), 0);
 
       setStats({
         totalAmbassadeurs: amb.length,
         actifs: amb.filter((a) => a.statut === "actif").length,
-        inactifs: amb.filter((a) => a.statut === "inactif").length,
+        inactifs: amb.filter((a) => a.statut !== "actif").length,
         totalFilleuls: fill.length,
-        totalCommissions: comm.reduce((s, c) => s + c.montant, 0),
-        commissionsPayees: comm.filter((c) => c.statut === "payee").reduce((s, c) => s + c.montant, 0),
-        commissionsEnAttente: comm.filter((c) => c.statut === "en_attente").reduce((s, c) => s + c.montant, 0),
+        totalCommissions: totalComm,
+        commissionsPayees: payees,
+        commissionsEnAttente: enAttente,
         parBranche: Object.entries(brancheMap).map(([branche, count]) => ({ branche, count })).sort((a, b) => b.count - a.count),
         parZone: Object.entries(zoneMap).map(([zone, count]) => ({ zone, count })).sort((a, b) => b.count - a.count),
-        evolutionMois: Object.entries(moisMap).map(([mois, count]) => ({ mois, count })),
+        parNiveau: Object.entries(niveauMap).map(([niveau, count]) => ({ niveau, count })).sort((a, b) => b.count - a.count),
       });
 
       setLoading(false);
@@ -89,154 +145,87 @@ export default function StatistiquesPage() {
 
   if (!stats) return null;
 
-  const maxBranche = Math.max(...stats.parBranche.map((b) => b.count), 1);
-  const maxZone = Math.max(...stats.parZone.map((z) => z.count), 1);
-  const maxMois = Math.max(...stats.evolutionMois.map((m) => m.count), 1);
-  const tauxActivite = stats.totalAmbassadeurs > 0
-    ? Math.round((stats.actifs / stats.totalAmbassadeurs) * 100)
-    : 0;
+  const tauxActivite = stats.totalAmbassadeurs > 0 ? Math.round((stats.actifs / stats.totalAmbassadeurs) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-sbbs-blue text-white px-6 py-4 flex items-center gap-4 shadow-md">
-        <button onClick={() => router.push("/dashboard")} className="hover:text-sbbs-gold transition">
-          ← Retour
-        </button>
+        <button onClick={() => router.push("/dashboard")} className="hover:text-sbbs-gold transition">← Retour</button>
         <div className="flex items-center gap-3">
           <img src="/LOGO%20SBBS%20PNG.webp" alt="SBBS" className="w-8 h-8 rounded-full object-cover border-2 border-sbbs-gold" />
           <h1 className="font-bold text-lg">Statistiques & Analyses</h1>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
+      <main className="max-w-5xl mx-auto px-4 py-8 space-y-6">
 
-        {/* KPIs principaux */}
+        {/* KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard label="Ambassadeurs" value={stats.totalAmbassadeurs} icon="👥" color="blue" />
-          <KpiCard label="Filleuls" value={stats.totalFilleuls} icon="🤝" color="gold" />
+          <KpiCard label="Filleuls" value={stats.totalFilleuls} icon="🎓" color="gold" />
           <KpiCard label="Commissions payées" value={`${stats.commissionsPayees.toLocaleString()} F`} icon="✅" color="green" />
           <KpiCard label="En attente" value={`${stats.commissionsEnAttente.toLocaleString()} F`} icon="⏳" color="red" />
         </div>
 
-        {/* Taux d'activité */}
+        {/* Taux activité */}
         <div className="card">
-          <h2 className="font-bold text-sbbs-blue mb-4">Taux d'activité des ambassadeurs</h2>
+          <h2 className="font-bold text-sbbs-blue mb-3">Taux d'activité</h2>
           <div className="flex items-center gap-4 mb-2">
             <span className="text-3xl font-bold text-sbbs-blue">{tauxActivite}%</span>
             <span className="text-gray-500 text-sm">{stats.actifs} actifs / {stats.inactifs} inactifs</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-4">
-            <div
-              className="bg-sbbs-blue h-4 rounded-full transition-all duration-500"
-              style={{ width: `${tauxActivite}%` }}
-            />
-          </div>
-          <div className="flex justify-between text-xs text-gray-400 mt-1">
-            <span>0%</span>
-            <span>100%</span>
+            <div className="bg-sbbs-blue h-4 rounded-full transition-all duration-500" style={{ width: `${tauxActivite}%` }} />
           </div>
         </div>
 
-        {/* Ambassadeurs par branche */}
-        {stats.parBranche.length > 0 && (
-          <div className="card">
-            <h2 className="font-bold text-sbbs-blue mb-4">Ambassadeurs par Branche SBBS</h2>
-            <div className="space-y-3">
-              {stats.parBranche.map((b) => (
-                <div key={b.branche}>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="font-medium">{b.branche}</span>
-                    <span className="text-sbbs-blue font-bold">{b.count}</span>
-                  </div>
-                  <div className="w-full bg-gray-100 rounded-full h-3">
-                    <div
-                      className="bg-sbbs-blue h-3 rounded-full transition-all duration-500"
-                      style={{ width: `${(b.count / maxBranche) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Graphiques circulaires */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
 
-        {/* Ambassadeurs par zone */}
-        {stats.parZone.length > 0 && (
+          {/* Par branche */}
           <div className="card">
-            <h2 className="font-bold text-sbbs-blue mb-4">Ambassadeurs par Zone / Ville</h2>
-            <div className="space-y-3">
-              {stats.parZone.map((z) => (
-                <div key={z.zone}>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="font-medium">{z.zone}</span>
-                    <span className="text-sbbs-gold font-bold">{z.count}</span>
-                  </div>
-                  <div className="w-full bg-gray-100 rounded-full h-3">
-                    <div
-                      className="bg-sbbs-gold h-3 rounded-full transition-all duration-500"
-                      style={{ width: `${(z.count / maxZone) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <h2 className="font-bold text-sbbs-blue mb-4">Par Branche SBBS</h2>
+            <DonutChart
+              data={stats.parBranche.map(b => b.count)}
+              labels={stats.parBranche.map(b => b.branche)}
+              colors={COLORS}
+            />
           </div>
-        )}
 
-        {/* Evolution mensuelle */}
-        {stats.evolutionMois.length > 0 && (
+          {/* Par zone */}
           <div className="card">
-            <h2 className="font-bold text-sbbs-blue mb-4">Évolution des inscriptions</h2>
-            <div className="flex items-end gap-3 h-32">
-              {stats.evolutionMois.map((m) => (
-                <div key={m.mois} className="flex flex-col items-center gap-1 flex-1">
-                  <span className="text-xs font-bold text-sbbs-blue">{m.count}</span>
-                  <div
-                    className="w-full bg-sbbs-blue rounded-t transition-all duration-500"
-                    style={{ height: `${(m.count / maxMois) * 100}px` }}
-                  />
-                  <span className="text-xs text-gray-400">{m.mois}</span>
-                </div>
-              ))}
-            </div>
+            <h2 className="font-bold text-sbbs-blue mb-4">Par Zone / Ville</h2>
+            <DonutChart
+              data={stats.parZone.map(z => z.count)}
+              labels={stats.parZone.map(z => z.zone)}
+              colors={["#C9A84C", "#1A3A6C", "#CC0000", "#1d9e75", "#2a5499"]}
+            />
           </div>
-        )}
 
-        {/* Commissions */}
-        <div className="card">
-          <h2 className="font-bold text-sbbs-blue mb-4">Répartition des Commissions</h2>
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-2xl font-bold text-sbbs-blue">{stats.totalCommissions.toLocaleString()}</p>
-              <p className="text-xs text-gray-500 mt-1">Total FCFA</p>
-            </div>
-            <div className="bg-green-50 rounded-lg p-4">
-              <p className="text-2xl font-bold text-green-600">{stats.commissionsPayees.toLocaleString()}</p>
-              <p className="text-xs text-gray-500 mt-1">Payées</p>
-            </div>
-            <div className="bg-yellow-50 rounded-lg p-4">
-              <p className="text-2xl font-bold text-yellow-600">{stats.commissionsEnAttente.toLocaleString()}</p>
-              <p className="text-xs text-gray-500 mt-1">En attente</p>
+          {/* Par niveau */}
+          <div className="card">
+            <h2 className="font-bold text-sbbs-blue mb-4">Par Niveau / Grade</h2>
+            <DonutChart
+              data={stats.parNiveau.map(n => n.count)}
+              labels={stats.parNiveau.map(n => n.niveau)}
+              colors={["#C9A84C", "#CC0000", "#1A3A6C", "#1d9e75"]}
+            />
+          </div>
+
+          {/* Commissions */}
+          <div className="card">
+            <h2 className="font-bold text-sbbs-blue mb-4">Commissions (FCFA)</h2>
+            <DonutChart
+              data={[stats.commissionsPayees, stats.commissionsEnAttente]}
+              labels={["Payées", "En attente"]}
+              colors={["#1d9e75", "#C9A84C"]}
+            />
+            <div className="mt-4 pt-4 border-t border-gray-100 text-center">
+              <p className="text-sm text-gray-500">Total général</p>
+              <p className="text-2xl font-bold text-sbbs-blue">{stats.totalCommissions.toLocaleString()} FCFA</p>
             </div>
           </div>
-          {stats.totalCommissions > 0 && (
-            <div className="mt-4">
-              <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden flex">
-                <div
-                  className="bg-green-500 h-4 transition-all"
-                  style={{ width: `${(stats.commissionsPayees / stats.totalCommissions) * 100}%` }}
-                />
-                <div
-                  className="bg-yellow-400 h-4 transition-all"
-                  style={{ width: `${(stats.commissionsEnAttente / stats.totalCommissions) * 100}%` }}
-                />
-              </div>
-              <div className="flex gap-4 mt-2 text-xs">
-                <span className="flex items-center gap-1"><span className="w-3 h-3 bg-green-500 rounded-full inline-block"/> Payées</span>
-                <span className="flex items-center gap-1"><span className="w-3 h-3 bg-yellow-400 rounded-full inline-block"/> En attente</span>
-              </div>
-            </div>
-          )}
+
         </div>
 
       </main>
