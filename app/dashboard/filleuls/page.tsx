@@ -31,7 +31,7 @@ export default function FilleulsPage() {
     prenom: "",
     telephone: "",
     formation: "",
-    statut: "en_attente",
+    statut: "En attente",
   });
   const [error, setError] = useState("");
   const router = useRouter();
@@ -141,10 +141,10 @@ export default function FilleulsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Statut</label>
                 <select name="statut" value={form.statut} onChange={handleChange}
                   className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-sbbs-blue">
-                  <option value="en_attente">En attente</option>
-                  <option value="inscrit">Inscrit</option>
-                  <option value="confirme">Confirmé</option>
-                  <option value="annule">Annulé</option>
+                  <option value="En attente">En attente</option>
+                  <option value="Inscrit">Inscrit</option>
+                  <option value="Confirmé">Confirmé</option>
+                  <option value="Annulé">Annulé</option>
                 </select>
               </div>
             </div>
