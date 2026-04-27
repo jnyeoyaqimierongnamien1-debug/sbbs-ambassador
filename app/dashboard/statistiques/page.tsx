@@ -103,7 +103,7 @@ export default function StatistiquesPage() {
           ← Retour
         </button>
         <div className="flex items-center gap-3">
-          <img src="/LOGO_SBBS_PNG.webp" alt="SBBS" className="w-8 h-8 rounded-full object-cover border-2 border-sbbs-gold" />
+          <img src="/LOGO%20SBBS%20PNG.webp" alt="SBBS" className="w-8 h-8 rounded-full object-cover border-2 border-sbbs-gold" />
           <h1 className="font-bold text-lg">Statistiques & Analyses</h1>
         </div>
       </header>
