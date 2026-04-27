@@ -89,7 +89,7 @@ export default function AmbassadeursPage() {
                   <th className="px-4 py-3 text-left">Téléphone</th>
                   <th className="px-4 py-3 text-left">Zone / Ville</th>
                   <th className="px-4 py-3 text-left">Statut</th>
-                  <th className="px-4 py-3 text-left">Action</th>
+                  <th className="px-4 py-3 text-left">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -108,12 +108,29 @@ export default function AmbassadeursPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() => router.push(`/dashboard/ambassadeurs/${a.id}`)}
-                        className="text-sbbs-blue hover:underline text-sm font-medium"
-                      >
-                        Voir →
-                      </button>
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => router.push(`/dashboard/ambassadeurs/${a.id}`)}
+                          className="text-sbbs-blue hover:underline text-xs font-medium"
+                        >
+                          ✏️ Voir/Modifier
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!confirm(`Supprimer ${a.prenom} ${a.nom} ? Ses filleuls et commissions seront aussi supprimés.`)) return;
+                            const { data: filleuls } = await supabase.from("filleuls").select("id").eq("ambassadeur_id", a.id);
+                            const ids = (filleuls ?? []).map((f: {id: string}) => f.id);
+                            if (ids.length > 0) await supabase.from("commissions").delete().in("filleul_id", ids);
+                            await supabase.from("commissions").delete().eq("ambassadeur_id", a.id);
+                            await supabase.from("filleuls").delete().eq("ambassadeur_id", a.id);
+                            await supabase.from("ambassadeurs").delete().eq("id", a.id);
+                            setAmbassadeurs((prev) => prev.filter((x) => x.id !== a.id));
+                          }}
+                          className="text-sbbs-red hover:underline text-xs font-medium"
+                        >
+                          🗑️ Supprimer
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
