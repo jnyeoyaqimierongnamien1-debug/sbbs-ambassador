@@ -154,6 +154,12 @@ export default function DashboardPage() {
             icon="💰"
           />
           <NavCard
+            title="Classement"
+            description="Podium et performances des ambassadeurs"
+            href="/dashboard/classement"
+            icon="🏆"
+          />
+          <NavCard
             title="Statistiques"
             description="Graphiques et analyses en temps réel"
             href="/dashboard/statistiques"
