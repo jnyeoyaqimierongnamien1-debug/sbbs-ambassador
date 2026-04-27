@@ -12,23 +12,23 @@ type Ambassadeur = {
   email: string;
   zone: string;
   branche: string;
+  niveau: string;
   statut: string;
   created_at: string;
 };
 
 type Filleul = {
   id: string;
-  filleul_nom: string;
-  filleul_prenom: string;
+  nom: string;
+  prenom: string;
   formation: string;
   statut: string;
 };
 
 type Commission = {
   id: string;
-  montant: number;
-  type_commission: string;
-  statut: string;
+  montant_commission: number;
+  statut_paiement: string;
 };
 
 export default function AmbassadeurDetailPage() {
@@ -45,7 +45,7 @@ export default function AmbassadeurDetailPage() {
   const supabase = createClient();
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push("/login"); return; }
 
@@ -53,8 +53,8 @@ export default function AmbassadeurDetailPage() {
 
       const [{ data: amb }, { data: fill }, { data: comm }] = await Promise.all([
         supabase.from("ambassadeurs").select("*").eq("id", id).single(),
-        supabase.from("filleuls").select("*").eq("ambassadeur_id", id).order("created_at", { ascending: false }),
-        supabase.from("commissions").select("*").eq("ambassadeur_id", id).order("created_at", { ascending: false }),
+        supabase.from("filleuls").select("id, nom, prenom, formation, statut").eq("ambassadeur_id", id).order("created_at", { ascending: false }),
+        supabase.from("commissions").select("id, montant_commission, statut_paiement").eq("ambassadeur_id", id).order("created_at", { ascending: false }),
       ]);
 
       setAmbassadeur(amb);
@@ -63,7 +63,7 @@ export default function AmbassadeurDetailPage() {
       setCommissions(comm ?? []);
       setLoading(false);
     };
-    fetch();
+    fetchData();
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -82,6 +82,7 @@ export default function AmbassadeurDetailPage() {
         email: form.email,
         zone: form.zone,
         branche: form.branche,
+        niveau: form.niveau,
         statut: form.statut,
       })
       .eq("id", ambassadeur!.id);
@@ -96,8 +97,9 @@ export default function AmbassadeurDetailPage() {
     setSaving(false);
   };
 
-  const totalCommissions = commissions.reduce((s, c) => s + c.montant, 0);
-  const commissionsPayees = commissions.filter((c) => c.statut === "payee").reduce((s, c) => s + c.montant, 0);
+  const totalCommissions = commissions.reduce((s, c) => s + (Number(c.montant_commission) || 0), 0);
+  const commissionsPayees = commissions.filter((c) => c.statut_paiement === "Payé").reduce((s, c) => s + (Number(c.montant_commission) || 0), 0);
+  const filleulsConfirmes = filleuls.filter((f) => f.statut === "Confirmé").length;
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
@@ -111,6 +113,10 @@ export default function AmbassadeurDetailPage() {
     </div>
   );
 
+  const niveauIcon: Record<string, string> = {
+    "Débutant": "🌱", "Bronze": "🥉", "Argent": "🥈", "Or": "🥇", "Platine": "💎"
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-sbbs-blue text-white px-6 py-4 flex items-center justify-between shadow-md">
@@ -118,14 +124,15 @@ export default function AmbassadeurDetailPage() {
           <button onClick={() => router.push("/dashboard/ambassadeurs")} className="hover:text-sbbs-gold transition">
             ← Retour
           </button>
-          <h1 className="font-bold text-lg">Fiche Ambassadeur</h1>
+          <div className="flex items-center gap-2">
+            <img src="/LOGO%20SBBS%20PNG.webp" alt="SBBS" className="w-8 h-8 rounded-full object-cover border-2 border-sbbs-gold" />
+            <h1 className="font-bold text-lg">Fiche Ambassadeur</h1>
+          </div>
         </div>
         <button
           onClick={() => { setEditMode(!editMode); setSaveMsg(""); }}
           className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition ${
-            editMode
-              ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              : "bg-sbbs-gold text-white hover:bg-yellow-500"
+            editMode ? "bg-gray-200 text-gray-700" : "bg-sbbs-gold text-white hover:bg-yellow-500"
           }`}
         >
           {editMode ? "Annuler" : "✏️ Modifier"}
@@ -142,22 +149,26 @@ export default function AmbassadeurDetailPage() {
           </div>
         )}
 
+        {/* Infos */}
         <div className="card">
           <div className="flex items-center gap-4 mb-4">
-            <div className="bg-sbbs-blue rounded-full w-14 h-14 flex items-center justify-center">
+            <div className="bg-sbbs-blue rounded-full w-14 h-14 flex items-center justify-center flex-shrink-0">
               <span className="text-sbbs-gold text-xl font-bold">
                 {ambassadeur.prenom?.[0]}{ambassadeur.nom?.[0]}
               </span>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-sbbs-blue">
-                {ambassadeur.prenom} {ambassadeur.nom}
-              </h2>
-              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                ambassadeur.statut === "actif" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
-              }`}>
-                {ambassadeur.statut}
-              </span>
+              <h2 className="text-xl font-bold text-sbbs-blue">{ambassadeur.prenom} {ambassadeur.nom}</h2>
+              <div className="flex items-center gap-2 mt-1">
+                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                  ambassadeur.statut === "actif" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
+                }`}>{ambassadeur.statut}</span>
+                {ambassadeur.niveau && (
+                  <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
+                    {niveauIcon[ambassadeur.niveau] || "🌱"} {ambassadeur.niveau}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -173,23 +184,27 @@ export default function AmbassadeurDetailPage() {
               ].map((field) => (
                 <div key={field.name}>
                   <label className="block text-xs font-medium text-gray-500 mb-1">{field.label}</label>
-                  <input
-                    type="text"
-                    name={field.name}
+                  <input type="text" name={field.name}
                     value={form[field.name as keyof typeof form] as string ?? ""}
                     onChange={handleChange}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sbbs-blue"
-                  />
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sbbs-blue" />
                 </div>
               ))}
               <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Niveau</label>
+                <select name="niveau" value={form.niveau ?? "Débutant"} onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sbbs-blue">
+                  <option value="Débutant">🌱 Débutant</option>
+                  <option value="Bronze">🥉 Bronze</option>
+                  <option value="Argent">🥈 Argent</option>
+                  <option value="Or">🥇 Or</option>
+                  <option value="Platine">💎 Platine</option>
+                </select>
+              </div>
+              <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Statut</label>
-                <select
-                  name="statut"
-                  value={form.statut ?? "actif"}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sbbs-blue"
-                >
+                <select name="statut" value={form.statut ?? "actif"} onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sbbs-blue">
                   <option value="actif">Actif</option>
                   <option value="inactif">Inactif</option>
                 </select>
@@ -211,21 +226,23 @@ export default function AmbassadeurDetailPage() {
           )}
         </div>
 
+        {/* Stats */}
         <div className="grid grid-cols-3 gap-4">
           <div className="card text-center border-l-4 border-sbbs-blue">
             <p className="text-2xl font-bold text-sbbs-blue">{filleuls.length}</p>
-            <p className="text-sm text-gray-500">Filleuls</p>
-          </div>
-          <div className="card text-center border-l-4 border-sbbs-gold">
-            <p className="text-2xl font-bold text-sbbs-gold">{totalCommissions.toLocaleString()}</p>
-            <p className="text-sm text-gray-500">FCFA total</p>
+            <p className="text-xs text-gray-500">Filleuls total</p>
           </div>
           <div className="card text-center border-l-4 border-green-500">
-            <p className="text-2xl font-bold text-green-600">{commissionsPayees.toLocaleString()}</p>
-            <p className="text-sm text-gray-500">FCFA payés</p>
+            <p className="text-2xl font-bold text-green-600">{filleulsConfirmes}</p>
+            <p className="text-xs text-gray-500">Confirmés</p>
+          </div>
+          <div className="card text-center border-l-4 border-sbbs-gold">
+            <p className="text-xl font-bold text-sbbs-gold">{totalCommissions.toLocaleString()}</p>
+            <p className="text-xs text-gray-500">FCFA total</p>
           </div>
         </div>
 
+        {/* Filleuls */}
         <div className="card">
           <h3 className="font-bold text-sbbs-blue mb-3">Filleuls ({filleuls.length})</h3>
           {filleuls.length === 0 ? (
@@ -234,10 +251,12 @@ export default function AmbassadeurDetailPage() {
             <div className="space-y-2">
               {filleuls.map((f) => (
                 <div key={f.id} className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2 text-sm">
-                  <span className="font-medium">{f.filleul_prenom} {f.filleul_nom}</span>
-                  <span className="text-gray-500">{f.formation}</span>
+                  <span className="font-medium">{f.prenom} {f.nom}</span>
+                  <span className="text-gray-500 text-xs">{f.formation}</span>
                   <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                    f.statut === "confirme" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                    f.statut === "Confirmé" ? "bg-green-100 text-green-700" :
+                    f.statut === "En attente" ? "bg-yellow-100 text-yellow-700" :
+                    "bg-red-100 text-red-700"
                   }`}>{f.statut}</span>
                 </div>
               ))}
@@ -245,6 +264,7 @@ export default function AmbassadeurDetailPage() {
           )}
         </div>
 
+        {/* Commissions */}
         <div className="card">
           <h3 className="font-bold text-sbbs-blue mb-3">Commissions ({commissions.length})</h3>
           {commissions.length === 0 ? (
@@ -253,16 +273,20 @@ export default function AmbassadeurDetailPage() {
             <div className="space-y-2">
               {commissions.map((c) => (
                 <div key={c.id} className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2 text-sm">
-                  <span className="font-medium">{c.type_commission}</span>
-                  <span className="font-bold text-sbbs-blue">{c.montant.toLocaleString()} FCFA</span>
+                  <span className="font-bold text-sbbs-blue">{(Number(c.montant_commission) || 0).toLocaleString()} FCFA</span>
                   <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                    c.statut === "payee" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
-                  }`}>{c.statut === "payee" ? "Payée" : "En attente"}</span>
+                    c.statut_paiement === "Payé" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                  }`}>{c.statut_paiement}</span>
                 </div>
               ))}
+              <div className="border-t pt-2 flex justify-between text-sm font-bold">
+                <span>Total payé</span>
+                <span className="text-green-600">{commissionsPayees.toLocaleString()} FCFA</span>
+              </div>
             </div>
           )}
         </div>
+
       </main>
     </div>
   );
