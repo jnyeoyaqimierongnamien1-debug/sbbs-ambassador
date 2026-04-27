@@ -34,6 +34,7 @@ export default function FilleulsPage() {
     statut: "En attente",
   });
   const [error, setError] = useState("");
+  const [editId, setEditId] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
@@ -66,16 +67,21 @@ export default function FilleulsPage() {
     setSaving(true);
     setError("");
 
-    const { data, error } = await supabase.from("filleuls").insert([form]).select("*, ambassadeurs(nom, prenom)").single();
-
-    if (error) {
-      setError(error.message);
-      setSaving(false);
-      return;
+    if (editId) {
+      const { error } = await supabase.from("filleuls").update({
+        nom: form.nom, prenom: form.prenom, telephone: form.telephone,
+        formation: form.formation, statut: form.statut, ambassadeur_id: form.ambassadeur_id,
+      }).eq("id", editId);
+      if (error) { setError(error.message); setSaving(false); return; }
+      setFilleuls((prev) => prev.map((f) => f.id === editId ? { ...f, ...form } as typeof f : f));
+      setEditId(null);
+    } else {
+      const { data, error } = await supabase.from("filleuls").insert([form]).select("*, ambassadeurs(nom, prenom)").single();
+      if (error) { setError(error.message); setSaving(false); return; }
+      setFilleuls([data, ...filleuls]);
     }
 
-    setFilleuls([data, ...filleuls]);
-    setForm({ ambassadeur_id: "", nom: "", prenom: "", telephone: "", formation: "", statut: "en_attente" });
+    setForm({ ambassadeur_id: "", nom: "", prenom: "", telephone: "", formation: "", statut: "En attente" });
     setShowForm(false);
     setSaving(false);
   };
@@ -85,10 +91,10 @@ export default function FilleulsPage() {
   );
 
   const statutColor: Record<string, string> = {
-    inscrit: "bg-blue-100 text-blue-700",
-    en_attente: "bg-yellow-100 text-yellow-700",
-    confirme: "bg-green-100 text-green-700",
-    annule: "bg-red-100 text-red-700",
+    "Inscrit": "bg-blue-100 text-blue-700",
+    "En attente": "bg-yellow-100 text-yellow-700",
+    "Confirmé": "bg-green-100 text-green-700",
+    "Annulé": "bg-red-100 text-red-700",
   };
 
   return (
@@ -111,7 +117,7 @@ export default function FilleulsPage() {
         {/* Formulaire */}
         {showForm && (
           <div className="card mb-6 border-l-4 border-sbbs-gold">
-            <h2 className="font-bold text-sbbs-blue mb-4">Enregistrer un nouveau filleul</h2>
+            <h2 className="font-bold text-sbbs-blue mb-4">{editId ? "Modifier le filleul" : "Enregistrer un nouveau filleul"}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Ambassadeur *</label>
@@ -150,7 +156,7 @@ export default function FilleulsPage() {
             </div>
             {error && <p className="text-sbbs-red text-sm mt-3">{error}</p>}
             <button onClick={handleSubmit} disabled={saving} className="btn-primary w-full mt-4">
-              {saving ? "Enregistrement..." : "Enregistrer le filleul"}
+              {saving ? "Enregistrement..." : editId ? "💾 Sauvegarder les modifications" : "Enregistrer le filleul"}
             </button>
           </div>
         )}
@@ -177,6 +183,7 @@ export default function FilleulsPage() {
                   <th className="px-4 py-3 text-left">Ambassadeur</th>
                   <th className="px-4 py-3 text-left">Téléphone</th>
                   <th className="px-4 py-3 text-left">Statut</th>
+                  <th className="px-4 py-3 text-left">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -190,6 +197,27 @@ export default function FilleulsPage() {
                       <span className={`px-2 py-1 rounded-full text-xs font-semibold ${statutColor[f.statut] ?? "bg-gray-100 text-gray-500"}`}>
                         {f.statut}
                       </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setForm({ ambassadeur_id: f.ambassadeur_id, nom: f.nom, prenom: f.prenom, telephone: f.telephone, formation: f.formation, statut: f.statut });
+                            setEditId(f.id);
+                            setShowForm(true);
+                          }}
+                          className="text-sbbs-blue hover:underline text-xs font-medium"
+                        >✏️ Modifier</button>
+                        <button
+                          onClick={async () => {
+                            if (!confirm(`Supprimer ${f.prenom} ${f.nom} ?`)) return;
+                            await supabase.from("commissions").delete().eq("filleul_id", f.id);
+                            await supabase.from("filleuls").delete().eq("id", f.id);
+                            setFilleuls((prev) => prev.filter((x) => x.id !== f.id));
+                          }}
+                          className="text-sbbs-red hover:underline text-xs font-medium"
+                        >🗑️ Supprimer</button>
+                      </div>
                     </td>
                   </tr>
                 ))}
