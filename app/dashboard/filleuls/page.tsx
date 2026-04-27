@@ -4,214 +4,200 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
-type Stats = {
-  totalAmbassadeurs: number;
-  totalFilleuls: number;
-  commissionsEnAttente: number;
-  commissionsPayees: number;
+type Filleul = {
+  id: string;
+  nom: string;
+  prenom: string;
+  telephone: string;
+  formation: string;
+  statut: string;
+  created_at: string;
+  ambassadeur_id: string;
+  ambassadeurs?: { nom: string; prenom: string };
 };
 
-export default function DashboardPage() {
-  const [stats, setStats] = useState<Stats>({
-    totalAmbassadeurs: 0,
-    totalFilleuls: 0,
-    commissionsEnAttente: 0,
-    commissionsPayees: 0,
-  });
+type Ambassadeur = { id: string; nom: string; prenom: string };
+
+export default function FilleulsPage() {
+  const [filleuls, setFilleuls] = useState<Filleul[]>([]);
+  const [ambassadeurs, setAmbassadeurs] = useState<Ambassadeur[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [search, setSearch] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    ambassadeur_id: "",
+    nom: "",
+    prenom: "",
+    telephone: "",
+    formation: "",
+    statut: "En attente",
+  });
+  const [error, setError] = useState("");
   const router = useRouter();
   const supabase = createClient();
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push("/login");
-        return;
-      }
+      if (!user) { router.push("/login"); return; }
 
-      const [
-        { count: totalAmbassadeurs },
-        { count: totalFilleuls },
-        { data: commissionsData },
-      ] = await Promise.all([
-        supabase.from("ambassadeurs").select("*", { count: "exact", head: true }),
-        supabase.from("filleuls").select("*", { count: "exact", head: true }),
-        supabase.from("commissions").select("montant, statut"),
+      const [{ data: fill }, { data: amb }] = await Promise.all([
+        supabase.from("filleuls").select("*, ambassadeurs(nom, prenom)").order("created_at", { ascending: false }),
+        supabase.from("ambassadeurs").select("id, nom, prenom").eq("statut", "actif").order("nom"),
       ]);
 
-      const commissionsEnAttente = commissionsData
-        ?.filter((c) => c.statut === "En attente")
-        .reduce((sum, c) => sum + c.montant, 0) ?? 0;
-
-      const commissionsPayees = commissionsData
-        ?.filter((c) => c.statut === "Payée")
-        .reduce((sum, c) => sum + c.montant, 0) ?? 0;
-
-      setStats({
-        totalAmbassadeurs: totalAmbassadeurs ?? 0,
-        totalFilleuls: totalFilleuls ?? 0,
-        commissionsEnAttente,
-        commissionsPayees,
-      });
+      setFilleuls(fill ?? []);
+      setAmbassadeurs(amb ?? []);
       setLoading(false);
     };
-
-    fetchStats();
+    fetchData();
   }, []);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-sbbs-blue font-semibold text-lg animate-pulse">
-          Chargement...
-        </p>
-      </div>
-    );
-  }
+  const handleSubmit = async () => {
+    if (!form.ambassadeur_id || !form.nom || !form.prenom || !form.formation) {
+      setError("Ambassadeur, prénom, nom et formation sont obligatoires.");
+      return;
+    }
+    setSaving(true);
+    setError("");
+
+    const { data, error } = await supabase.from("filleuls").insert([form]).select("*, ambassadeurs(nom, prenom)").single();
+
+    if (error) {
+      setError(error.message);
+      setSaving(false);
+      return;
+    }
+
+    setFilleuls([data, ...filleuls]);
+    setForm({ ambassadeur_id: "", nom: "", prenom: "", telephone: "", formation: "", statut: "en_attente" });
+    setShowForm(false);
+    setSaving(false);
+  };
+
+  const filtered = filleuls.filter((f) =>
+    `${f.nom} ${f.prenom} ${f.formation}`.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const statutColor: Record<string, string> = {
+    inscrit: "bg-blue-100 text-blue-700",
+    en_attente: "bg-yellow-100 text-yellow-700",
+    confirme: "bg-green-100 text-green-700",
+    annule: "bg-red-100 text-red-700",
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-sbbs-blue text-white px-6 py-4 flex items-center justify-between shadow-md">
-        <div className="flex items-center gap-3">
-          <img src="/LOGO%20SBBS%20PNG.webp" alt="SBBS" className="w-10 h-10 rounded-full object-cover border-2 border-sbbs-gold" />
-          <div>
-            <h1 className="font-bold text-lg leading-none">SBBS Ambassador</h1>
-            <p className="text-xs text-blue-200">Tableau de bord</p>
+        <div className="flex items-center gap-4">
+          <button onClick={() => router.push("/dashboard")} className="hover:text-sbbs-gold transition">← Retour</button>
+          <div className="flex items-center gap-2">
+            <img src="/LOGO%20SBBS%20PNG.webp" alt="SBBS" className="w-8 h-8 rounded-full object-cover border-2 border-sbbs-gold" />
+            <h1 className="font-bold text-lg">Filleuls</h1>
           </div>
         </div>
-        <button
-          onClick={handleLogout}
-          className="text-sm bg-white text-sbbs-blue px-4 py-1.5 rounded-lg font-semibold hover:bg-gray-100 transition"
-        >
-          Déconnexion
+        <button onClick={() => setShowForm(!showForm)} className="bg-sbbs-gold text-white px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-yellow-500 transition">
+          {showForm ? "Annuler" : "+ Nouveau filleul"}
         </button>
       </header>
 
-      {/* Contenu */}
       <main className="max-w-5xl mx-auto px-4 py-8">
-        <h2 className="text-xl font-bold text-sbbs-blue mb-6">Vue d'ensemble</h2>
 
-        {/* Cartes stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard
-            label="Ambassadeurs"
-            value={stats.totalAmbassadeurs}
-            color="blue"
-            icon="👥"
-          />
-          <StatCard
-            label="Filleuls"
-            value={stats.totalFilleuls}
-            color="gold"
-            icon="🎓"
-          />
-          <StatCard
-            label="Commissions en attente"
-            value={`${stats.commissionsEnAttente.toLocaleString()} FCFA`}
-            color="red"
-            icon="⏳"
-          />
-          <StatCard
-            label="Commissions payées"
-            value={`${stats.commissionsPayees.toLocaleString()} FCFA`}
-            color="green"
-            icon="✅"
-          />
+        {/* Formulaire */}
+        {showForm && (
+          <div className="card mb-6 border-l-4 border-sbbs-gold">
+            <h2 className="font-bold text-sbbs-blue mb-4">Enregistrer un nouveau filleul</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Ambassadeur *</label>
+                <select name="ambassadeur_id" value={form.ambassadeur_id} onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-sbbs-blue">
+                  <option value="">-- Sélectionner l'ambassadeur parrain --</option>
+                  {ambassadeurs.map((a) => (
+                    <option key={a.id} value={a.id}>{a.prenom} {a.nom}</option>
+                  ))}
+                </select>
+              </div>
+              {[
+                { label: "Prénom *", name: "prenom", placeholder: "ex: Kouamé" },
+                { label: "Nom *", name: "nom", placeholder: "ex: KONAN" },
+                { label: "Téléphone", name: "telephone", placeholder: "ex: 07 00 00 00 00" },
+                { label: "Formation *", name: "formation", placeholder: "ex: BTS Marketing" },
+              ].map((field) => (
+                <div key={field.name}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{field.label}</label>
+                  <input type="text" name={field.name}
+                    value={form[field.name as keyof typeof form]}
+                    onChange={handleChange} placeholder={field.placeholder}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-sbbs-blue" />
+                </div>
+              ))}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+                <select name="statut" value={form.statut} onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-sbbs-blue">
+                  <option value="En attente">En attente</option>
+                  <option value="Inscrit">Inscrit</option>
+                  <option value="Confirmé">Confirmé</option>
+                  <option value="Annulé">Annulé</option>
+                </select>
+              </div>
+            </div>
+            {error && <p className="text-sbbs-red text-sm mt-3">{error}</p>}
+            <button onClick={handleSubmit} disabled={saving} className="btn-primary w-full mt-4">
+              {saving ? "Enregistrement..." : "Enregistrer le filleul"}
+            </button>
+          </div>
+        )}
+
+        {/* Recherche */}
+        <div className="mb-4">
+          <input type="text" placeholder="Rechercher par nom, formation..." value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-sbbs-blue" />
         </div>
 
-        {/* Navigation rapide */}
-        <h2 className="text-xl font-bold text-sbbs-blue mb-4">Navigation</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <NavCard
-            title="Ambassadeurs"
-            description="Gérer les ambassadeurs et leurs informations"
-            href="/dashboard/ambassadeurs"
-            icon="👥"
-          />
-          <NavCard
-            title="Filleuls"
-            description="Enregistrer et suivre les filleuls"
-            href="/dashboard/filleuls"
-            icon="🎓"
-          />
-          <NavCard
-            title="Parrainages"
-            description="Suivre les parrainages et inscriptions"
-            href="/dashboard/parrainages"
-            icon="🤝"
-          />
-          <NavCard
-            title="Commissions"
-            description="Gérer et valider les paiements"
-            href="/dashboard/commissions"
-            icon="💰"
-          />
-          <NavCard
-            title="Statistiques"
-            description="Graphiques et analyses en temps réel"
-            href="/dashboard/statistiques"
-            icon="📊"
-          />
-        </div>
+        {/* Tableau */}
+        {loading ? (
+          <p className="text-center text-sbbs-blue animate-pulse">Chargement...</p>
+        ) : filtered.length === 0 ? (
+          <div className="card text-center text-gray-400 py-12">Aucun filleul trouvé.</div>
+        ) : (
+          <div className="card overflow-x-auto p-0">
+            <table className="w-full text-sm">
+              <thead className="bg-sbbs-blue text-white">
+                <tr>
+                  <th className="px-4 py-3 text-left">Filleul</th>
+                  <th className="px-4 py-3 text-left">Formation</th>
+                  <th className="px-4 py-3 text-left">Ambassadeur</th>
+                  <th className="px-4 py-3 text-left">Téléphone</th>
+                  <th className="px-4 py-3 text-left">Statut</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((f, i) => (
+                  <tr key={f.id} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                    <td className="px-4 py-3 font-medium">{f.prenom} {f.nom}</td>
+                    <td className="px-4 py-3">{f.formation}</td>
+                    <td className="px-4 py-3">{f.ambassadeurs?.prenom} {f.ambassadeurs?.nom}</td>
+                    <td className="px-4 py-3">{f.telephone || "—"}</td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${statutColor[f.statut] ?? "bg-gray-100 text-gray-500"}`}>
+                        {f.statut}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </main>
-    </div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  color,
-  icon,
-}: {
-  label: string;
-  value: string | number;
-  color: "blue" | "gold" | "red" | "green";
-  icon: string;
-}) {
-  const colors = {
-    blue: "border-sbbs-blue text-sbbs-blue",
-    gold: "border-sbbs-gold text-sbbs-gold",
-    red: "border-sbbs-red text-sbbs-red",
-    green: "border-green-500 text-green-600",
-  };
-
-  return (
-    <div className={`card border-l-4 ${colors[color]}`}>
-      <div className="text-2xl mb-1">{icon}</div>
-      <p className="text-sm text-gray-500">{label}</p>
-      <p className={`text-2xl font-bold ${colors[color]}`}>{value}</p>
-    </div>
-  );
-}
-
-function NavCard({
-  title,
-  description,
-  href,
-  icon,
-}: {
-  title: string;
-  description: string;
-  href: string;
-  icon: string;
-}) {
-  const router = useRouter();
-  return (
-    <div
-      onClick={() => router.push(href)}
-      className="card cursor-pointer hover:shadow-lg transition-shadow border border-gray-100 hover:border-sbbs-blue"
-    >
-      <div className="text-3xl mb-2">{icon}</div>
-      <h3 className="font-bold text-sbbs-blue">{title}</h3>
-      <p className="text-sm text-gray-500 mt-1">{description}</p>
     </div>
   );
 }
