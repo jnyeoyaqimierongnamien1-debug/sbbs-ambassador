@@ -37,16 +37,16 @@ export default function DashboardPage() {
       ] = await Promise.all([
         supabase.from("ambassadeurs").select("*", { count: "exact", head: true }),
         supabase.from("filleuls").select("*", { count: "exact", head: true }),
-        supabase.from("commissions").select("montant, statut"),
+        supabase.from("commissions").select("montant_commission, statut_paiement"),
       ]);
 
       const commissionsEnAttente = commissionsData
-        ?.filter((c) => c.statut === "En attente")
-        .reduce((sum, c) => sum + c.montant, 0) ?? 0;
+        ?.filter((c) => c.statut_paiement === "En attente")
+        .reduce((sum, c) => sum + (Number(c.montant_commission) || 0), 0) ?? 0;
 
       const commissionsPayees = commissionsData
-        ?.filter((c) => c.statut === "Payée")
-        .reduce((sum, c) => sum + c.montant, 0) ?? 0;
+        ?.filter((c) => c.statut_paiement === "Payé")
+        .reduce((sum, c) => sum + (Number(c.montant_commission) || 0), 0) ?? 0;
 
       setStats({
         totalAmbassadeurs: totalAmbassadeurs ?? 0,
