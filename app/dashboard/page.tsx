@@ -136,6 +136,12 @@ export default function DashboardPage() {
             icon="👥"
           />
           <NavCard
+            title="Filleuls"
+            description="Enregistrer et suivre les filleuls"
+            href="/dashboard/filleuls"
+            icon="🎓"
+          />
+          <NavCard
             title="Parrainages"
             description="Suivre les parrainages et inscriptions"
             href="/dashboard/parrainages"
