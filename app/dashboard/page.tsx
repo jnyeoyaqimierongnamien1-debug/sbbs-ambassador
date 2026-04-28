@@ -165,6 +165,12 @@ export default function DashboardPage() {
             href="/dashboard/statistiques"
             icon="📊"
           />
+          <NavCard
+  title="Validations"
+  description="Candidatures ambassadeurs en attente"
+  href="/dashboard/validations"
+  icon="✅"
+/>
         </div>
       </main>
     </div>
