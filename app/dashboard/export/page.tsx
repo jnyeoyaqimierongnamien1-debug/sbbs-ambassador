@@ -69,7 +69,7 @@ export default function ExportPage() {
     const { data: amb } = await supabase
       .from("ambassadeurs").select("*").eq("user_id", user.id).single();
 
-    const isAmbassadeur = !!amb;
+    const isAmbassadeur = false;
     setMode(isAmbassadeur ? "ambassadeur" : "admin");
     if (amb) setMonAmbassadeurId(amb.id);
 
