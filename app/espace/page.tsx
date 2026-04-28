@@ -279,6 +279,16 @@ export default function EspacePage() {
     <p className="text-sm text-gray-500">10 messages personnalisés prêts à envoyer</p>
   </div>
 </div>
+          <div
+  onClick={() => router.push("/espace/export")}
+  className="card cursor-pointer border border-blue-200 bg-blue-50 hover:bg-blue-100 transition mb-4 flex items-center gap-4"
+>
+  <span className="text-3xl">📊</span>
+  <div>
+    <p className="font-bold text-sbbs-blue">Exports & Rapports</p>
+    <p className="text-sm text-gray-500">Excel · CSV · PDF</p>
+  </div>
+</div>
           <h3 className="font-bold text-sbbs-blue text-lg">Mes Filleuls ({filleuls.length})</h3>
           <button onClick={openAdd} className="btn-primary text-sm px-4 py-2">
             + Ajouter un filleul
