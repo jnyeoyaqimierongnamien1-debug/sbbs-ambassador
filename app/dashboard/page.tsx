@@ -172,6 +172,12 @@ export default function DashboardPage() {
   icon="✅"
 />
           <NavCard
+  title="Validations Directeurs"
+  description="Candidatures directeurs de branches en attente"
+  href="/dashboard/validations-directeurs"
+  icon="🏫"
+/>
+          <NavCard
   title="Scripts WhatsApp"
   description="10 messages personnalisés pour les ambassadeurs"
   href="/dashboard/scripts"
