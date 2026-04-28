@@ -269,6 +269,16 @@ export default function EspacePage() {
 
         {/* En-tête liste filleuls */}
         <div className="flex items-center justify-between mb-3">
+          <div
+  onClick={() => router.push("/espace/scripts")}
+  className="card cursor-pointer border border-green-200 bg-green-50 hover:bg-green-100 transition mb-4 flex items-center gap-4"
+>
+  <span className="text-3xl">📲</span>
+  <div>
+    <p className="font-bold text-green-700">Scripts WhatsApp</p>
+    <p className="text-sm text-gray-500">10 messages personnalisés prêts à envoyer</p>
+  </div>
+</div>
           <h3 className="font-bold text-sbbs-blue text-lg">Mes Filleuls ({filleuls.length})</h3>
           <button onClick={openAdd} className="btn-primary text-sm px-4 py-2">
             + Ajouter un filleul
