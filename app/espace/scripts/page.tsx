@@ -34,6 +34,7 @@ type Vars = {
   niveau: string;
   jours_restants: number;
   filleuls_manquants: number;
+  telephone_ambassadeur: string;
 };
 
 const SCRIPTS: ScriptData[] = [
@@ -344,6 +345,8 @@ export default function ScriptsPage() {
       niveau: ambassadeurData.niveau || "Bronze",
       jours_restants,
       filleuls_manquants: Math.max(0, 3 - nb_filleuls),
+      telephone_ambassadeur: ambassadeurData.telephone || "",
+
     });
 
     setLoading(false);
