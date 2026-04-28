@@ -32,7 +32,23 @@ export default function LoginPage() {
       .select("id, statut")
       .eq("user_id", user?.id)
       .single();
+// Vérifier si c'est un directeur
+const { data: directeur } = await supabase
+  .from("directeurs")
+  .select("id, statut")
+  .eq("user_id", user?.id)
+  .single();
 
+if (directeur) {
+  if (directeur.statut === "En attente") {
+    await supabase.auth.signOut();
+    setError("PENDING");
+    setLoading(false);
+    return;
+  }
+  router.push("/directeur");
+  return;
+}
     if (ambassadeur) {
       if (ambassadeur.statut === "En attente") {
         await supabase.auth.signOut();
