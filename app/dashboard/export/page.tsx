@@ -149,7 +149,7 @@ export default function ExportPage() {
         const amb = ambassadeurs.find(a => a.id === f.ambassadeur_id);
         return [
           f.nom, f.prenom || "-", f.telephone, f.email || "-",
-          f.formation || "-", f.montant || 0, f.statut,
+          f.formation || "-", Number(f.montant) || 0, f.statut,
           f.date_inscription || "-",
           amb ? `${amb.prenom} ${amb.nom}` : "-",
         ];
