@@ -5,82 +5,111 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [error, setError]       = useState("");
+  const [loading, setLoading]   = useState(false);
+
+  const router   = useRouter();
   const supabase = createClient();
 
   const handleLogin = async () => {
     setLoading(true);
     setError("");
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (error) {
+    if (authError) {
       setError("Email ou mot de passe incorrect.");
       setLoading(false);
       return;
     }
 
-    router.push("/dashboard");
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const { data: ambassadeur } = await supabase
+      .from("ambassadeurs")
+      .select("id, statut")
+      .eq("user_id", user?.id)
+      .single();
+
+    if (ambassadeur) {
+      if (ambassadeur.statut === "En attente") {
+        await supabase.auth.signOut();
+        setError("PENDING");
+        setLoading(false);
+        return;
+      }
+      router.push("/espace");
+    } else {
+      router.push("/dashboard");
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="card w-full max-w-md">
-        {/* Logo / En-tête */}
         <div className="text-center mb-8">
-          <div className="inline-block bg-sbbs-blue rounded-full w-16 h-16 flex items-center justify-center mb-4">
+          <div className="inline-flex bg-sbbs-blue rounded-full w-16 h-16 items-center justify-center mb-4">
             <span className="text-sbbs-gold text-2xl font-bold">S</span>
           </div>
           <h1 className="text-2xl font-bold text-sbbs-blue">SBBS Ambassador</h1>
-          <p className="text-gray-500 text-sm mt-1">Espace Administration</p>
+          <p className="text-gray-500 text-sm mt-1">Connexion à votre espace</p>
         </div>
 
-        {/* Formulaire */}
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@sbbs.ci"
+              onChange={e => setEmail(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleLogin()}
+              placeholder="votre@email.com"
               className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-sbbs-blue"
             />
           </div>
-
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Mot de passe
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
             <input
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleLogin()}
               placeholder="••••••••"
               className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-sbbs-blue"
             />
           </div>
 
-          {error && (
-            <p className="text-sbbs-red text-sm text-center">{error}</p>
+          {error === "PENDING" && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3 text-sm text-yellow-800">
+              ⏳ <strong>Compte en cours de validation.</strong><br />
+              Vous serez contacté(e) sous 24h sur votre WhatsApp.
+            </div>
+          )}
+          {error && error !== "PENDING" && (
+            <p className="text-sbbs-red text-sm text-center font-medium bg-red-50 px-3 py-2 rounded-lg">
+              {error}
+            </p>
           )}
 
           <button
             onClick={handleLogin}
             disabled={loading}
-            className="btn-primary w-full mt-2"
+            className="btn-primary w-full py-3"
           >
-            {loading ? "Connexion..." : "Se connecter"}
+            {loading ? "Connexion en cours..." : "Se connecter"}
           </button>
+
+          <p className="text-center text-sm text-gray-500 pt-1">
+            Pas encore ambassadeur ?{" "}
+            <span
+              onClick={() => router.push("/devenir-ambassadeur")}
+              className="text-sbbs-blue font-semibold cursor-pointer hover:underline"
+            >
+              Rejoindre le réseau
+            </span>
+          </p>
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-6">
