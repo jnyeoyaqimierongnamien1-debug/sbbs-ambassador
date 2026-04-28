@@ -171,6 +171,18 @@ export default function DashboardPage() {
   href="/dashboard/validations"
   icon="✅"
 />
+          <NavCard
+  title="Scripts WhatsApp"
+  description="10 messages personnalisés pour les ambassadeurs"
+  href="/dashboard/scripts"
+  icon="📲"
+/>
+<NavCard
+  title="Exports & Rapports"
+  description="Excel · CSV · PDF"
+  href="/dashboard/export"
+  icon="📊"
+/>
         </div>
       </main>
     </div>
