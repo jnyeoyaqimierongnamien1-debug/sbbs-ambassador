@@ -25,10 +25,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchStats = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push("/login");
-        return;
-      }
+      if (!user) { router.push("/login"); return; }
 
       const [
         { count: totalAmbassadeurs },
@@ -68,9 +65,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-sbbs-blue font-semibold text-lg animate-pulse">
-          Chargement...
-        </p>
+        <p className="text-sbbs-blue font-semibold text-lg animate-pulse">Chargement...</p>
       </div>
     );
   }
@@ -87,60 +82,54 @@ export default function DashboardPage() {
             <p className="text-xs text-blue-200">Tableau de bord Admin</p>
           </div>
         </div>
-        <button
-          onClick={handleLogout}
-          className="text-sm bg-white text-sbbs-blue px-4 py-1.5 rounded-lg font-semibold hover:bg-gray-100 transition"
-        >
+        <button onClick={handleLogout} className="text-sm bg-white text-sbbs-blue px-4 py-1.5 rounded-lg font-semibold hover:bg-gray-100 transition">
           Déconnexion
         </button>
       </header>
 
-      {/* ─── BANDEAU PHOTO GROUPE ─────────────────────────────── */}
+      {/* ─── BANDEAU PHOTO DIPLÔMÉS ─────────────────────────────── */}
       <div className="relative w-full h-56 overflow-hidden">
         <img
           src="/diplomes-sbbs.jpg"
           alt="Diplômés SBBS"
           className="w-full h-full object-cover object-center"
         />
-        {/* Overlay gradient */}
-        <div className="absolute inset-0 bg-gradient-to-r from-sbbs-blue/80 via-sbbs-blue/40 to-transparent" />
-        {/* Texte sur le bandeau */}
+        <div className="absolute inset-0 bg-gradient-to-r from-sbbs-blue/85 via-sbbs-blue/50 to-sbbs-blue/20" />
         <div className="absolute inset-0 flex items-center px-8">
-          <div className="text-white">
-            <h2 className="text-2xl font-bold drop-shadow-lg">Bienvenue sur SBBS Ambassador</h2>
-            <p className="font-bold text-base mt-1 drop-shadow" style={{ color: "#CC0000"">
+          <div>
+            <h2 className="text-2xl font-bold text-white drop-shadow-lg">
+              Bienvenue sur{" "}
+              <span style={{ color: "#C9A84C" }}>SBBS Ambassador</span>
+            </h2>
+            <p className="font-bold text-base mt-1 drop-shadow" style={{ color: "#CC0000" }}>
               Intelligence et Expertise des Affaires
             </p>
-            <p className="text-blue-100 text-xs mt-1">
-              {stats.totalAmbassadeurs} ambassadeurs · {stats.totalFilleuls} filleuls
-            </p>
+            <div className="flex items-center gap-3 mt-3">
+              <span className="text-xs font-bold px-3 py-1 rounded-full border" style={{ color: "#C9A84C", borderColor: "#C9A84C", backgroundColor: "rgba(201,168,76,0.15)" }}>
+                👥 {stats.totalAmbassadeurs} Ambassadeurs
+              </span>
+              <span className="text-xs font-bold px-3 py-1 rounded-full border border-white/40 text-white" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
+                🎓 {stats.totalFilleuls} Filleuls
+              </span>
+            </div>
           </div>
+        </div>
+        <div className="absolute top-4 right-4">
+          <img src="/LOGO%20SBBS%20PNG.webp" alt="SBBS" className="w-12 h-12 rounded-full border-2 object-cover" style={{ borderColor: "#C9A84C" }} />
         </div>
       </div>
 
       {/* Contenu */}
       <main className="max-w-5xl mx-auto px-4 py-6">
 
-        {/* Cartes stats */}
         <h2 className="text-xl font-bold text-sbbs-blue mb-4">Vue d'ensemble</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard label="Ambassadeurs" value={stats.totalAmbassadeurs} color="blue" icon="👥" />
           <StatCard label="Filleuls" value={stats.totalFilleuls} color="gold" icon="🎓" />
-          <StatCard
-            label="Commissions en attente"
-            value={`${stats.commissionsEnAttente.toLocaleString()} FCFA`}
-            color="red"
-            icon="⏳"
-          />
-          <StatCard
-            label="Commissions payées"
-            value={`${stats.commissionsPayees.toLocaleString()} FCFA`}
-            color="green"
-            icon="✅"
-          />
+          <StatCard label="Commissions en attente" value={`${stats.commissionsEnAttente.toLocaleString()} FCFA`} color="red" icon="⏳" />
+          <StatCard label="Commissions payées" value={`${stats.commissionsPayees.toLocaleString()} FCFA`} color="green" icon="✅" />
         </div>
 
-        {/* Navigation */}
         <h2 className="text-xl font-bold text-sbbs-blue mb-4">Navigation</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <NavCard title="Ambassadeurs" description="Gérer les ambassadeurs et leurs informations" href="/dashboard/ambassadeurs" icon="👥" />
@@ -159,9 +148,7 @@ export default function DashboardPage() {
   );
 }
 
-function StatCard({
-  label, value, color, icon,
-}: {
+function StatCard({ label, value, color, icon }: {
   label: string; value: string | number;
   color: "blue" | "gold" | "red" | "green"; icon: string;
 }) {
@@ -180,17 +167,12 @@ function StatCard({
   );
 }
 
-function NavCard({
-  title, description, href, icon,
-}: {
+function NavCard({ title, description, href, icon }: {
   title: string; description: string; href: string; icon: string;
 }) {
   const router = useRouter();
   return (
-    <div
-      onClick={() => router.push(href)}
-      className="card cursor-pointer hover:shadow-lg transition-shadow border border-gray-100 hover:border-sbbs-blue"
-    >
+    <div onClick={() => router.push(href)} className="card cursor-pointer hover:shadow-lg transition-shadow border border-gray-100 hover:border-sbbs-blue">
       <div className="text-3xl mb-2">{icon}</div>
       <h3 className="font-bold text-sbbs-blue">{title}</h3>
       <p className="text-sm text-gray-500 mt-1">{description}</p>
