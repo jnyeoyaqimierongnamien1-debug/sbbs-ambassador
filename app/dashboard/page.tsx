@@ -92,7 +92,7 @@ export default function DashboardPage() {
         <img
           src="/Banni%C3%A8re%20bandeau.jpg"
           alt="Diplômés SBBS"
-          className="w-full h-full object-cover object-center"
+          className="w-full h-full object-cover object-top"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-sbbs-blue/85 via-sbbs-blue/50 to-sbbs-blue/20" />
         <div className="absolute inset-0 flex items-center px-8">
