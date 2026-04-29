@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
@@ -19,43 +19,61 @@ export default function DashboardPage() {
     commissionsPayees: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const router = useRouter();
   const supabase = createClient();
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push("/login"); return; }
+  const fetchStats = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { router.push("/login"); return; }
 
-      const [
-        { count: totalAmbassadeurs },
-        { count: totalFilleuls },
-        { data: commissionsData },
-      ] = await Promise.all([
-        supabase.from("ambassadeurs").select("*", { count: "exact", head: true }),
-        supabase.from("filleuls").select("*", { count: "exact", head: true }),
-        supabase.from("commissions").select("montant_commission, statut_paiement"),
-      ]);
+    const [
+      { count: totalAmbassadeurs },
+      { count: totalFilleuls },
+      { data: commissionsData },
+    ] = await Promise.all([
+      supabase.from("ambassadeurs").select("*", { count: "exact", head: true }),
+      supabase.from("filleuls").select("*", { count: "exact", head: true }),
+      supabase.from("commissions").select("montant_commission, statut_paiement"),
+    ]);
 
-      const commissionsEnAttente = commissionsData
-        ?.filter((c) => c.statut_paiement === "En attente")
-        .reduce((sum, c) => sum + (Number(c.montant_commission) || 0), 0) ?? 0;
+    const commissionsEnAttente = commissionsData
+      ?.filter((c) => c.statut_paiement === "En attente")
+      .reduce((sum, c) => sum + (Number(c.montant_commission) || 0), 0) ?? 0;
 
-      const commissionsPayees = commissionsData
-        ?.filter((c) => c.statut_paiement === "Payé")
-        .reduce((sum, c) => sum + (Number(c.montant_commission) || 0), 0) ?? 0;
+    const commissionsPayees = commissionsData
+      ?.filter((c) => c.statut_paiement === "Payé")
+      .reduce((sum, c) => sum + (Number(c.montant_commission) || 0), 0) ?? 0;
 
-      setStats({
-        totalAmbassadeurs: totalAmbassadeurs ?? 0,
-        totalFilleuls: totalFilleuls ?? 0,
-        commissionsEnAttente,
-        commissionsPayees,
-      });
-      setLoading(false);
-    };
-
-    fetchStats();
+    setStats({
+      totalAmbassadeurs: totalAmbassadeurs ?? 0,
+      totalFilleuls: totalFilleuls ?? 0,
+      commissionsEnAttente,
+      commissionsPayees,
+    });
+    setLastUpdate(new Date());
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    fetchStats();
+
+    // ─── REALTIME : écoute les changements en temps réel ───
+    const channel = supabase
+      .channel("dashboard-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "ambassadeurs" }, () => {
+        fetchStats();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "filleuls" }, () => {
+        fetchStats();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "commissions" }, () => {
+        fetchStats();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchStats]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -82,12 +100,19 @@ export default function DashboardPage() {
             <p className="text-xs text-blue-200">Tableau de bord Admin</p>
           </div>
         </div>
-        <button onClick={handleLogout} className="text-sm bg-white text-sbbs-blue px-4 py-1.5 rounded-lg font-semibold hover:bg-gray-100 transition">
-          Déconnexion
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Indicateur temps réel */}
+          <div className="flex items-center gap-1.5 bg-green-500/20 border border-green-400/40 px-3 py-1 rounded-full">
+            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+            <span className="text-xs text-green-300 font-medium">En direct</span>
+          </div>
+          <button onClick={handleLogout} className="text-sm bg-white text-sbbs-blue px-4 py-1.5 rounded-lg font-semibold hover:bg-gray-100 transition">
+            Déconnexion
+          </button>
+        </div>
       </header>
 
-      {/* ─── BANDEAU PHOTO DIPLÔMÉS ─────────────────────────────── */}
+      {/* Bandeau photo */}
       <div className="relative w-full h-56 overflow-hidden">
         <img
           src="/Banni%C3%A8re%20bandeau.jpg"
@@ -122,7 +147,15 @@ export default function DashboardPage() {
       {/* Contenu */}
       <main className="max-w-5xl mx-auto px-4 py-6">
 
-        <h2 className="text-xl font-bold text-sbbs-blue mb-4">Vue d'ensemble</h2>
+        {/* Dernière mise à jour */}
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-sbbs-blue">Vue d'ensemble</h2>
+          <p className="text-xs text-gray-400">
+            Mis à jour à {lastUpdate.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+          </p>
+        </div>
+
+        {/* Cartes stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard label="Ambassadeurs" value={stats.totalAmbassadeurs} color="blue" icon="👥" />
           <StatCard label="Filleuls" value={stats.totalFilleuls} color="gold" icon="🎓" />
@@ -130,6 +163,7 @@ export default function DashboardPage() {
           <StatCard label="Commissions payées" value={`${stats.commissionsPayees.toLocaleString()} FCFA`} color="green" icon="✅" />
         </div>
 
+        {/* Navigation */}
         <h2 className="text-xl font-bold text-sbbs-blue mb-4">Navigation</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <NavCard title="Ambassadeurs" description="Gérer les ambassadeurs et leurs informations" href="/dashboard/ambassadeurs" icon="👥" />
