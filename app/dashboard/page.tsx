@@ -96,11 +96,11 @@ export default function DashboardPage() {
       </header>
 
       {/* ─── BANDEAU PHOTO GROUPE ─────────────────────────────── */}
-      <div className="relative w-full h-48 overflow-hidden">
+      <div className="relative w-full h-56 overflow-hidden">
         <img
-          src="/WhatsApp%20Image%202026-04-29%20at%2013.04.45.jpeg"
-          alt="Équipe SBBS"
-          className="w-full h-full object-cover object-top"
+          src="/diplomes-sbbs.jpg"
+          alt="Diplômés SBBS"
+          className="w-full h-full object-cover object-center"
         />
         {/* Overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-r from-sbbs-blue/80 via-sbbs-blue/40 to-transparent" />
@@ -108,7 +108,7 @@ export default function DashboardPage() {
         <div className="absolute inset-0 flex items-center px-8">
           <div className="text-white">
             <h2 className="text-2xl font-bold drop-shadow-lg">Bienvenue sur SBBS Ambassador</h2>
-            <p className="text-sbbs-gold font-semibold text-sm mt-1 drop-shadow">
+            <p className="font-bold text-base mt-1 drop-shadow" style={{ color: "#CC0000"">
               Intelligence et Expertise des Affaires
             </p>
             <p className="text-blue-100 text-xs mt-1">
