@@ -113,7 +113,7 @@ export default function LoginPage() {
       {/* Photo PDG en arrière-plan */}
       <div
         className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url('/pdg-sbbs.jpeg')` }}
+        style={{ backgroundImage: `url('/pdg-sbbs%20.jpeg')` }}
       />
       {/* Overlay gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-sbbs-blue/70 via-sbbs-blue/60 to-sbbs-blue/90" />
