@@ -90,7 +90,7 @@ export default function DashboardPage() {
       {/* ─── BANDEAU PHOTO DIPLÔMÉS ─────────────────────────────── */}
       <div className="relative w-full h-56 overflow-hidden">
         <img
-          src="/diplomes-sbbs.jpeg"
+          src="/banniere-sbbs.jpg"
           alt="Diplômés SBBS"
           className="w-full h-full object-cover object-center"
         />
