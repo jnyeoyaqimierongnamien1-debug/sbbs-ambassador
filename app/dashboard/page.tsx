@@ -77,13 +77,14 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+
       {/* Header */}
       <header className="bg-sbbs-blue text-white px-6 py-4 flex items-center justify-between shadow-md">
         <div className="flex items-center gap-3">
           <img src="/LOGO%20SBBS%20PNG.webp" alt="SBBS" className="w-10 h-10 rounded-full object-cover border-2 border-sbbs-gold" />
           <div>
             <h1 className="font-bold text-lg leading-none">SBBS Ambassador</h1>
-            <p className="text-xs text-blue-200">Tableau de bord</p>
+            <p className="text-xs text-blue-200">Tableau de bord Admin</p>
           </div>
         </div>
         <button
@@ -94,24 +95,37 @@ export default function DashboardPage() {
         </button>
       </header>
 
+      {/* ─── BANDEAU PHOTO GROUPE ─────────────────────────────── */}
+      <div className="relative w-full h-48 overflow-hidden">
+        <img
+          src="/WhatsApp%20Image%202026-04-29%20at%2013.04.45.jpeg"
+          alt="Équipe SBBS"
+          className="w-full h-full object-cover object-top"
+        />
+        {/* Overlay gradient */}
+        <div className="absolute inset-0 bg-gradient-to-r from-sbbs-blue/80 via-sbbs-blue/40 to-transparent" />
+        {/* Texte sur le bandeau */}
+        <div className="absolute inset-0 flex items-center px-8">
+          <div className="text-white">
+            <h2 className="text-2xl font-bold drop-shadow-lg">Bienvenue sur SBBS Ambassador</h2>
+            <p className="text-sbbs-gold font-semibold text-sm mt-1 drop-shadow">
+              Intelligence et Expertise des Affaires
+            </p>
+            <p className="text-blue-100 text-xs mt-1">
+              {stats.totalAmbassadeurs} ambassadeurs · {stats.totalFilleuls} filleuls
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Contenu */}
-      <main className="max-w-5xl mx-auto px-4 py-8">
-        <h2 className="text-xl font-bold text-sbbs-blue mb-6">Vue d'ensemble</h2>
+      <main className="max-w-5xl mx-auto px-4 py-6">
 
         {/* Cartes stats */}
+        <h2 className="text-xl font-bold text-sbbs-blue mb-4">Vue d'ensemble</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard
-            label="Ambassadeurs"
-            value={stats.totalAmbassadeurs}
-            color="blue"
-            icon="👥"
-          />
-          <StatCard
-            label="Filleuls"
-            value={stats.totalFilleuls}
-            color="gold"
-            icon="🎓"
-          />
+          <StatCard label="Ambassadeurs" value={stats.totalAmbassadeurs} color="blue" icon="👥" />
+          <StatCard label="Filleuls" value={stats.totalFilleuls} color="gold" icon="🎓" />
           <StatCard
             label="Commissions en attente"
             value={`${stats.commissionsEnAttente.toLocaleString()} FCFA`}
@@ -126,69 +140,19 @@ export default function DashboardPage() {
           />
         </div>
 
-        {/* Navigation rapide */}
+        {/* Navigation */}
         <h2 className="text-xl font-bold text-sbbs-blue mb-4">Navigation</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <NavCard
-            title="Ambassadeurs"
-            description="Gérer les ambassadeurs et leurs informations"
-            href="/dashboard/ambassadeurs"
-            icon="👥"
-          />
-          <NavCard
-            title="Filleuls"
-            description="Enregistrer et suivre les filleuls"
-            href="/dashboard/filleuls"
-            icon="🎓"
-          />
-          <NavCard
-            title="Parrainages"
-            description="Suivre les parrainages et inscriptions"
-            href="/dashboard/parrainages"
-            icon="🤝"
-          />
-          <NavCard
-            title="Commissions"
-            description="Gérer et valider les paiements"
-            href="/dashboard/commissions"
-            icon="💰"
-          />
-          <NavCard
-            title="Classement"
-            description="Podium et performances des ambassadeurs"
-            href="/dashboard/classement"
-            icon="🏆"
-          />
-          <NavCard
-            title="Statistiques"
-            description="Graphiques et analyses en temps réel"
-            href="/dashboard/statistiques"
-            icon="📊"
-          />
-          <NavCard
-  title="Validations"
-  description="Candidatures ambassadeurs en attente"
-  href="/dashboard/validations"
-  icon="✅"
-/>
-          <NavCard
-  title="Validations Directeurs"
-  description="Candidatures directeurs de branches en attente"
-  href="/dashboard/validations-directeurs"
-  icon="🏫"
-/>
-          <NavCard
-  title="Scripts WhatsApp"
-  description="10 messages personnalisés pour les ambassadeurs"
-  href="/dashboard/scripts"
-  icon="📲"
-/>
-<NavCard
-  title="Exports & Rapports"
-  description="Excel · CSV · PDF"
-  href="/dashboard/export"
-  icon="📊"
-/>
+          <NavCard title="Ambassadeurs" description="Gérer les ambassadeurs et leurs informations" href="/dashboard/ambassadeurs" icon="👥" />
+          <NavCard title="Filleuls" description="Enregistrer et suivre les filleuls" href="/dashboard/filleuls" icon="🎓" />
+          <NavCard title="Parrainages" description="Suivre les parrainages et inscriptions" href="/dashboard/parrainages" icon="🤝" />
+          <NavCard title="Commissions" description="Gérer et valider les paiements" href="/dashboard/commissions" icon="💰" />
+          <NavCard title="Classement" description="Podium et performances des ambassadeurs" href="/dashboard/classement" icon="🏆" />
+          <NavCard title="Statistiques" description="Graphiques et analyses en temps réel" href="/dashboard/statistiques" icon="📊" />
+          <NavCard title="Validations" description="Candidatures ambassadeurs en attente" href="/dashboard/validations" icon="✅" />
+          <NavCard title="Validations Directeurs" description="Candidatures directeurs de branches en attente" href="/dashboard/validations-directeurs" icon="🏫" />
+          <NavCard title="Scripts WhatsApp" description="Messages personnalisés pour les ambassadeurs" href="/dashboard/scripts" icon="📲" />
+          <NavCard title="Exports & Rapports" description="Excel · CSV · PDF" href="/dashboard/export" icon="📊" />
         </div>
       </main>
     </div>
@@ -196,15 +160,10 @@ export default function DashboardPage() {
 }
 
 function StatCard({
-  label,
-  value,
-  color,
-  icon,
+  label, value, color, icon,
 }: {
-  label: string;
-  value: string | number;
-  color: "blue" | "gold" | "red" | "green";
-  icon: string;
+  label: string; value: string | number;
+  color: "blue" | "gold" | "red" | "green"; icon: string;
 }) {
   const colors = {
     blue: "border-sbbs-blue text-sbbs-blue",
@@ -212,7 +171,6 @@ function StatCard({
     red: "border-sbbs-red text-sbbs-red",
     green: "border-green-500 text-green-600",
   };
-
   return (
     <div className={`card border-l-4 ${colors[color]}`}>
       <div className="text-2xl mb-1">{icon}</div>
@@ -223,15 +181,9 @@ function StatCard({
 }
 
 function NavCard({
-  title,
-  description,
-  href,
-  icon,
+  title, description, href, icon,
 }: {
-  title: string;
-  description: string;
-  href: string;
-  icon: string;
+  title: string; description: string; href: string; icon: string;
 }) {
   const router = useRouter();
   return (
