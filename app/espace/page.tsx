@@ -233,7 +233,16 @@ export default function EspacePage() {
             </div>
           </div>
         </div>
-
+<div
+  onClick={() => router.push("/parametres")}
+  className="card cursor-pointer border border-gray-200 bg-gray-50 hover:bg-gray-100 transition flex items-center gap-3"
+>
+  <span className="text-2xl">⚙️</span>
+  <div>
+    <p className="font-bold text-gray-700 text-sm">Paramètres</p>
+    <p className="text-xs text-gray-500">Profil · Mot de passe · Photo</p>
+  </div>
+</div>
         {/* Liste filleuls */}
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-bold text-sbbs-blue text-lg">Mes Filleuls ({filleuls.length})</h3>
