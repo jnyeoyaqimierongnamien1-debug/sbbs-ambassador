@@ -35,7 +35,7 @@ const COMMISSION_RULES_DEFAULT: CommissionRule[] = [
 
 // Direction Commerciale & Marketing Physique — contacts fixes
 const DIRECTION_CONTACTS = {
-  whatsapp: "+2250708761840",
+  whatsapp: "+2250101536402",
   telephone: "+2252150008911",
   nom: "Direction Commerciale & Marketing",
 };
