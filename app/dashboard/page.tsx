@@ -176,13 +176,12 @@ export default function DashboardPage() {
           <NavCard title="Validations Directeurs" description="Candidatures directeurs de branches en attente" href="/dashboard/validations-directeurs" icon="🏫" />
           <NavCard title="Scripts WhatsApp" description="Messages personnalisés pour les ambassadeurs" href="/dashboard/scripts" icon="📲" />
           <NavCard title="Exports & Rapports" description="Excel · CSV · PDF" href="/dashboard/export" icon="📊" />
+          <NavCard title="Paramètres" description="Profil, mot de passe, commissions" href="/parametres" icon="⚙️" />
         </div>
       </main>
     </div>
   );
 }
-<NavCard
-  title="Paramètres"
   description="Profil, mot de passe, commissions"
   href="/parametres"
   icon="⚙️"
