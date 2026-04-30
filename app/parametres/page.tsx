@@ -182,15 +182,31 @@ export default function ParametresPage() {
     const ext = photoFile.name.split(".").pop();
     const fileName = `${profile.id}.${ext}`;
 
-    const { error } = await supabase.storage
+   const { error: uploadError } = await supabase.storage
       .from("avatars")
       .upload(fileName, photoFile, { upsert: true });
 
-    if (error) {
-      setPhotoMsg("❌ Erreur upload : " + error.message);
-    } else {
-      setPhotoMsg("✅ Photo de profil mise à jour !");
+    if (uploadError) {
+      setPhotoMsg("❌ Erreur upload : " + uploadError.message);
+      setSavingPhoto(false);
+      return;
     }
+
+    const { data: urlData } = supabase.storage
+      .from("avatars")
+      .getPublicUrl(fileName);
+
+    const photoUrl = urlData.publicUrl;
+
+    if (profile.table !== "admin") {
+      await supabase
+        .from(profile.table)
+        .update({ photo_url: photoUrl })
+        .eq("id", profile.id);
+    }
+
+    setPhotoPreview(photoUrl);
+    setPhotoMsg("✅ Photo de profil mise à jour !");
     setSavingPhoto(false);
     setTimeout(() => setPhotoMsg(""), 3000);
   };
