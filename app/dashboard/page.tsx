@@ -12,17 +12,16 @@ type Stats = {
 };
 
 const NAV_ITEMS = [
-  { title: "Ambassadeurs", description: "Gérer les ambassadeurs", href: "/dashboard/ambassadeurs", icon: "👥", bg: "#1A3A6C", text: "#fff" },
-  { title: "Filleuls", description: "Suivre les filleuls", href: "/dashboard/filleuls", icon: "🎓", bg: "#C9A84C", text: "#fff" },
-  { title: "Parrainages", description: "Suivre les parrainages", href: "/dashboard/parrainages", icon: "🤝", bg: "#059669", text: "#fff" },
-  { title: "Commissions", description: "Gérer les paiements", href: "/dashboard/commissions", icon: "💰", bg: "#7C3AED", text: "#fff" },
-  { title: "Classement", description: "Podium ambassadeurs", href: "/dashboard/classement", icon: "🏆", bg: "#EA580C", text: "#fff" },
-  { title: "Statistiques", description: "Analyses en temps réel", href: "/dashboard/statistiques", icon: "📊", bg: "#0284C7", text: "#fff" },
-  { title: "Validations", description: "Candidatures ambassadeurs", href: "/dashboard/validations", icon: "✅", bg: "#16A34A", text: "#fff" },
-  { title: "Validations Directeurs", description: "Candidatures directeurs", href: "/dashboard/validations-directeurs", icon: "🏫", bg: "#92400E", text: "#fff" },
-  { title: "Scripts WhatsApp", description: "Messages personnalisés", href: "/dashboard/scripts", icon: "📲", bg: "#25D366", text: "#fff" },
-  { title: "Exports & Rapports", description: "Excel · CSV · PDF", href: "/dashboard/export", icon: "📄", bg: "#CC0000", text: "#fff" },
-  { title: "Paramètres", description: "Profil · Mot de passe", href: "/parametres", icon: "⚙️", bg: "#374151", text: "#fff" },
+  { title: "Ambassadeurs", description: "Gérer les ambassadeurs", href: "/dashboard/ambassadeurs", icon: "👥", gradient: "linear-gradient(135deg, #1A3A6C 0%, #2563EB 100%)" },
+  { title: "Filleuls", description: "Suivre les filleuls", href: "/dashboard/filleuls", icon: "🎓", gradient: "linear-gradient(135deg, #B7860B 0%, #C9A84C 100%)" },
+  { title: "Commissions", description: "Gérer les paiements", href: "/dashboard/commissions", icon: "💰", gradient: "linear-gradient(135deg, #5B21B6 0%, #7C3AED 100%)" },
+  { title: "Classement", description: "Podium ambassadeurs", href: "/dashboard/classement", icon: "🏆", gradient: "linear-gradient(135deg, #C2410C 0%, #EA580C 100%)" },
+  { title: "Statistiques", description: "Analyses en temps réel", href: "/dashboard/statistiques", icon: "📊", gradient: "linear-gradient(135deg, #0369A1 0%, #0284C7 100%)" },
+  { title: "Validations", description: "Candidatures ambassadeurs", href: "/dashboard/validations", icon: "✅", gradient: "linear-gradient(135deg, #1A3A6C 0%, #1E40AF 100%)" },
+  { title: "Validations Directeurs", description: "Candidatures directeurs", href: "/dashboard/validations-directeurs", icon: "🏫", gradient: "linear-gradient(135deg, #78350F 0%, #92400E 100%)" },
+  { title: "Scripts WhatsApp", description: "Messages personnalisés", href: "/dashboard/scripts", icon: "📲", gradient: "linear-gradient(135deg, #15803D 0%, #25D366 100%)" },
+  { title: "Exports & Rapports", description: "Excel · CSV · PDF", href: "/dashboard/export", icon: "📄", gradient: "linear-gradient(135deg, #991B1B 0%, #CC0000 100%)" },
+  { title: "Paramètres", description: "Profil · Mot de passe", href: "/parametres", icon: "⚙️", gradient: "linear-gradient(135deg, #1F2937 0%, #374151 100%)" },
 ];
 
 export default function DashboardPage() {
@@ -147,10 +146,10 @@ export default function DashboardPage() {
       <main className="max-w-5xl mx-auto px-4 py-6">
 
         {/* Vue d'ensemble — Accordéon */}
-        <div className="mb-5">
+        <div className="mb-6">
           <button
             onClick={() => setShowStats(s => !s)}
-            className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-3 hover:border-sbbs-blue transition shadow-sm"
+            className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-5 py-3.5 hover:border-sbbs-blue transition shadow-sm"
           >
             <div className="flex items-center gap-3">
               <span className="font-bold text-sbbs-blue text-lg">📊 Vue d'ensemble</span>
@@ -171,20 +170,25 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Navigation — boutons colorés */}
-        <h2 className="text-xl font-bold text-sbbs-blue mb-3">Navigation</h2>
+        {/* Navigation — boutons premium */}
+        <h2 className="text-xl font-bold text-sbbs-blue mb-4">Navigation</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           {NAV_ITEMS.map(item => (
             <button
               key={item.href}
               onClick={() => router.push(item.href)}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl shadow-sm hover:shadow-md hover:scale-105 transition-all text-left"
-              style={{ backgroundColor: item.bg, color: item.text }}
+              className="group relative flex items-center gap-3 px-4 py-4 rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-200 text-left overflow-hidden"
+              style={{ background: item.gradient }}
             >
-              <span className="text-2xl shrink-0">{item.icon}</span>
+              {/* Effet brillance */}
+              <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity rounded-2xl" />
+              {/* Cercle icône */}
+              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-xl shrink-0">
+                {item.icon}
+              </div>
               <div className="min-w-0">
-                <p className="font-bold text-sm leading-tight">{item.title}</p>
-                <p className="text-xs opacity-75 truncate">{item.description}</p>
+                <p className="font-bold text-sm text-white leading-tight">{item.title}</p>
+                <p className="text-xs text-white/70 truncate mt-0.5">{item.description}</p>
               </div>
             </button>
           ))}
