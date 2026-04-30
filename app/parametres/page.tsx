@@ -117,9 +117,9 @@ export default function ParametresPage() {
 
   // ─── Lien de parrainage
   const getReferralLink = () => {
-    if (!profile) return "";
-    return `https://sbbs-ambassador.vercel.app/register?ref=${profile.id}`;
-  };
+  if (!profile) return "";
+  return `https://sbbs-ambassador.vercel.app/login?ref=${profile.id}`;
+};
 
   // ─── Sauvegarder profil
   const handleSaveProfil = async () => {
