@@ -35,7 +35,7 @@ const COMMISSION_RULES_DEFAULT: CommissionRule[] = [
 
 // Direction Commerciale & Marketing Physique — contacts fixes
 const DIRECTION_CONTACTS = {
-  whatsapp: "+22507087618 40",
+  whatsapp: "+2250708761840",
   telephone: "+2252150008911",
   nom: "Direction Commerciale & Marketing",
 };
@@ -111,7 +111,9 @@ export default function ParametresPage() {
 
     const { data: { user: authUser } } = await supabase.auth.getUser();
     setRole("admin");
-    setProfile({ id: authUser?.id || "", nom: "Admin", prenom: "SBBS", telephone: "", email: authUser?.email || "", table: "admin" });
+setProfile({ id: authUser?.id || "", nom: "Admin", prenom: "SBBS", telephone: "", email: authUser?.email || "", table: "admin" });
+const photoMeta = authUser?.user_metadata?.photo_url;
+if (photoMeta) setPhotoPreview(photoMeta);
     setLoading(false);
   };
 
@@ -213,16 +215,28 @@ export default function ParametresPage() {
     const photoUrlPreview = `${photoUrlDb}?t=${Date.now()}`; // cache-buster
 
     if (profile.table !== "admin") {
-      const { error: dbError } = await supabase
-        .from(profile.table)
-        .update({ photo_url: photoUrlDb })
-        .eq("id", profile.id);
-      if (dbError) {
-        setPhotoMsg("❌ Erreur base de données : " + dbError.message);
-        setSavingPhoto(false);
-        return;
-      }
-    }
+  const { error: dbError } = await supabase
+    .from(profile.table)
+    .update({ photo_url: photoUrlDb })
+    .eq("id", profile.id);
+
+  if (dbError) {
+    setPhotoMsg("❌ Erreur base de données : " + dbError.message);
+    setSavingPhoto(false);
+    return;
+  }
+} else {
+  // Pour l'admin : sauvegarde dans les métadonnées Supabase Auth
+  const { error: metaError } = await supabase.auth.updateUser({
+    data: { photo_url: photoUrlDb }
+  });
+
+  if (metaError) {
+    setPhotoMsg("❌ Erreur sauvegarde admin : " + metaError.message);
+    setSavingPhoto(false);
+    return;
+  }
+}
 
     setPhotoPreview(photoUrlPreview);
     setPhotoFile(null);
