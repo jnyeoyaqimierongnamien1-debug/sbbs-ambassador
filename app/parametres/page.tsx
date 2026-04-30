@@ -112,9 +112,10 @@ export default function ParametresPage() {
     const { data: { user: authUser } } = await supabase.auth.getUser();
     setRole("admin");
 setProfile({ id: authUser?.id || "", nom: "Admin", prenom: "SBBS", telephone: "", email: authUser?.email || "", table: "admin" });
-const photoMeta = authUser?.user_metadata?.photo_url;
-if (photoMeta) setPhotoPreview(photoMeta);
-    setLoading(false);
+// Charger la photo admin depuis les métadonnées Auth
+const adminPhotoUrl = user.user_metadata?.photo_url;
+if (adminPhotoUrl) setPhotoPreview(adminPhotoUrl);
+setLoading(false);
   };
 
   // ─── Lien de parrainage
