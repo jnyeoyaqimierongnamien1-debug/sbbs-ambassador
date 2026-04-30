@@ -11,6 +11,20 @@ type Stats = {
   commissionsPayees: number;
 };
 
+const NAV_ITEMS = [
+  { title: "Ambassadeurs", description: "Gérer les ambassadeurs", href: "/dashboard/ambassadeurs", icon: "👥", bg: "#1A3A6C", text: "#fff" },
+  { title: "Filleuls", description: "Suivre les filleuls", href: "/dashboard/filleuls", icon: "🎓", bg: "#C9A84C", text: "#fff" },
+  { title: "Parrainages", description: "Suivre les parrainages", href: "/dashboard/parrainages", icon: "🤝", bg: "#059669", text: "#fff" },
+  { title: "Commissions", description: "Gérer les paiements", href: "/dashboard/commissions", icon: "💰", bg: "#7C3AED", text: "#fff" },
+  { title: "Classement", description: "Podium ambassadeurs", href: "/dashboard/classement", icon: "🏆", bg: "#EA580C", text: "#fff" },
+  { title: "Statistiques", description: "Analyses en temps réel", href: "/dashboard/statistiques", icon: "📊", bg: "#0284C7", text: "#fff" },
+  { title: "Validations", description: "Candidatures ambassadeurs", href: "/dashboard/validations", icon: "✅", bg: "#16A34A", text: "#fff" },
+  { title: "Validations Directeurs", description: "Candidatures directeurs", href: "/dashboard/validations-directeurs", icon: "🏫", bg: "#92400E", text: "#fff" },
+  { title: "Scripts WhatsApp", description: "Messages personnalisés", href: "/dashboard/scripts", icon: "📲", bg: "#25D366", text: "#fff" },
+  { title: "Exports & Rapports", description: "Excel · CSV · PDF", href: "/dashboard/export", icon: "📄", bg: "#CC0000", text: "#fff" },
+  { title: "Paramètres", description: "Profil · Mot de passe", href: "/parametres", icon: "⚙️", bg: "#374151", text: "#fff" },
+];
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<Stats>({
     totalAmbassadeurs: 0,
@@ -157,20 +171,23 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Navigation — boutons compacts */}
+        {/* Navigation — boutons colorés */}
         <h2 className="text-xl font-bold text-sbbs-blue mb-3">Navigation</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-          <NavCard title="Ambassadeurs" description="Gérer les ambassadeurs" href="/dashboard/ambassadeurs" icon="👥" />
-          <NavCard title="Filleuls" description="Suivre les filleuls" href="/dashboard/filleuls" icon="🎓" />
-          <NavCard title="Parrainages" description="Suivre les parrainages" href="/dashboard/parrainages" icon="🤝" />
-          <NavCard title="Commissions" description="Gérer les paiements" href="/dashboard/commissions" icon="💰" />
-          <NavCard title="Classement" description="Podium ambassadeurs" href="/dashboard/classement" icon="🏆" />
-          <NavCard title="Statistiques" description="Analyses en temps réel" href="/dashboard/statistiques" icon="📊" />
-          <NavCard title="Validations" description="Candidatures ambassadeurs" href="/dashboard/validations" icon="✅" />
-          <NavCard title="Validations Directeurs" description="Candidatures directeurs" href="/dashboard/validations-directeurs" icon="🏫" />
-          <NavCard title="Scripts WhatsApp" description="Messages personnalisés" href="/dashboard/scripts" icon="📲" />
-          <NavCard title="Exports & Rapports" description="Excel · CSV · PDF" href="/dashboard/export" icon="📊" />
-          <NavCard title="Paramètres" description="Profil · Mot de passe" href="/parametres" icon="⚙️" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          {NAV_ITEMS.map(item => (
+            <button
+              key={item.href}
+              onClick={() => router.push(item.href)}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl shadow-sm hover:shadow-md hover:scale-105 transition-all text-left"
+              style={{ backgroundColor: item.bg, color: item.text }}
+            >
+              <span className="text-2xl shrink-0">{item.icon}</span>
+              <div className="min-w-0">
+                <p className="font-bold text-sm leading-tight">{item.title}</p>
+                <p className="text-xs opacity-75 truncate">{item.description}</p>
+              </div>
+            </button>
+          ))}
         </div>
       </main>
     </div>
@@ -192,24 +209,6 @@ function StatCard({ label, value, color, icon }: {
       <div className="text-xl mb-1">{icon}</div>
       <p className="text-xs text-gray-500">{label}</p>
       <p className={`text-xl font-bold ${colors[color]}`}>{value}</p>
-    </div>
-  );
-}
-
-function NavCard({ title, description, href, icon }: {
-  title: string; description: string; href: string; icon: string;
-}) {
-  const router = useRouter();
-  return (
-    <div
-      onClick={() => router.push(href)}
-      className="bg-white rounded-xl px-3 py-3 cursor-pointer hover:shadow-md transition border border-gray-100 hover:border-sbbs-blue flex items-center gap-2"
-    >
-      <span className="text-xl shrink-0">{icon}</span>
-      <div className="min-w-0">
-        <p className="font-bold text-sbbs-blue text-xs leading-tight">{title}</p>
-        <p className="text-xs text-gray-400 truncate">{description}</p>
-      </div>
     </div>
   );
 }
