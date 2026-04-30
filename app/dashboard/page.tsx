@@ -182,10 +182,7 @@ export default function DashboardPage() {
     </div>
   );
 }
-  description="Profil, mot de passe, commissions"
-  href="/parametres"
-  icon="⚙️"
-/>
+
 function StatCard({ label, value, color, icon }: {
   label: string; value: string | number;
   color: "blue" | "gold" | "red" | "green"; icon: string;
