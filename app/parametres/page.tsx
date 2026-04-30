@@ -40,7 +40,7 @@ const DIRECTION_CONTACTS = {
   nom: "Direction Commerciale & Marketing",
 };
 
-type TabKey = "profil" | "motdepasse" | "photo" | "qrcode" | "inviter" | "contact" | "commissions";
+type TabKey = "profil" | "motdepasse" | "photo" | "qrcode" | "inviter" | "contact" | "codesecret" | "commissions";
 
 export default function ParametresPage() {
   const [role, setRole] = useState<UserRole>("admin");
