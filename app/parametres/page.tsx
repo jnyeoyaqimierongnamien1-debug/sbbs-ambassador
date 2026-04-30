@@ -72,10 +72,11 @@ export default function ParametresPage() {
 
     // Vérifier directeur
     const { data: dir } = await supabase.from("directeurs").select("*").eq("user_id", user.id).single();
-    if (dir) {
+   if (dir) {
       setRole("directeur");
       setProfile({ ...dir, table: "directeurs" });
       setFormProfil({ nom: dir.nom, prenom: dir.prenom, telephone: dir.telephone, zone: dir.zone || "", fonction: dir.fonction || "" });
+      if (dir.photo_url) setPhotoPreview(dir.photo_url);
       setLoading(false);
       return;
     }
@@ -86,6 +87,7 @@ export default function ParametresPage() {
       setRole("ambassadeur");
       setProfile({ ...amb, table: "ambassadeurs" });
       setFormProfil({ nom: amb.nom, prenom: amb.prenom, telephone: amb.telephone, zone: amb.zone || "", fonction: "" });
+      if (amb.photo_url) setPhotoPreview(amb.photo_url);
       setLoading(false);
       return;
     }
