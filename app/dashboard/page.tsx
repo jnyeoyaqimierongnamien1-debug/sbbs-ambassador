@@ -16,7 +16,7 @@ type UserRole = "admin" | "ambassadeur" | "directeur";
 const NAV_ITEMS = [
   { title: "Ambassadeurs", description: "Gérer les ambassadeurs", href: "/dashboard/ambassadeurs", icon: "👥", bg: "#1A3A6C", text: "#fff" },
   { title: "Filleuls", description: "Suivre les filleuls", href: "/dashboard/filleuls", icon: "🎓", bg: "#C9A84C", text: "#fff" },
-  { title: "Parrainages", description: "Suivre les parrainages", href: "/dashboard/parrainages", icon: "🤝", bg: "#059669", text: "#fff" },
+  
   { title: "Commissions", description: "Gérer les paiements", href: "/dashboard/commissions", icon: "💰", bg: "#7C3AED", text: "#fff" },
   { title: "Classement", description: "Podium ambassadeurs", href: "/dashboard/classement", icon: "🏆", bg: "#EA580C", text: "#fff" },
   { title: "Statistiques", description: "Analyses en temps réel", href: "/dashboard/statistiques", icon: "📊", bg: "#0284C7", text: "#fff" },
