@@ -77,6 +77,10 @@ export default function RootLayout({
           }}
         />
         {children}
+        import ChatFAB from "@/components/ChatFAB";
+
+// Dans le JSX, avant </body> :
+<ChatFAB />
       </body>
     </html>
   );
