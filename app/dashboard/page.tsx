@@ -14,6 +14,7 @@ type Stats = {
 type UserRole = "admin" | "ambassadeur" | "directeur";
 
 const NAV_ITEMS = [
+  { title: "Messages", description: "Tous les messages", href: "/chat", icon: "💬", bg: "#1D4ED8", text: "#fff" },
   { title: "Ambassadeurs", description: "Gérer les ambassadeurs", href: "/dashboard/ambassadeurs", icon: "👥", bg: "#1A3A6C", text: "#fff" },
   { title: "Médiathèque", description: "Fichiers · Vidéos · Docs", href: "/dashboard/mediatheque", icon: "📁", bg: "#0F766E", text: "#fff" },
   { title: "Filleuls", description: "Suivre les filleuls", href: "/dashboard/filleuls", icon: "🎓", bg: "#C9A84C", text: "#fff" },
