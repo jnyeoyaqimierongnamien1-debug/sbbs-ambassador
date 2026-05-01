@@ -121,7 +121,7 @@ setLoading(false);
   // ─── Lien de parrainage
   const getReferralLink = () => {
   if (!profile) return "";
-  return `https://sbbs-ambassador.vercel.app/login?ref=${profile.id}`;
+  return `https://sbbs-ambassador.vercel.app/register?ref=${profile.id}`;
 };
 
   // ─── Sauvegarder profil
