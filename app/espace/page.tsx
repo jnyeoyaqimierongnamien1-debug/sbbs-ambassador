@@ -103,12 +103,12 @@ export default function EspacePage() {
   const commissionsPayees  = filleuls.filter(f => f.statut === "Payé").reduce((s, f) => s + (Number(f.montant) || 0), 0);
   const commissionsAttente = filleuls.filter(f => ["En attente", "Inscrit"].includes(f.statut)).reduce((s, f) => s + (Number(f.montant) || 0), 0);
 
-  const handleSave = async (form: any) => {
+const handleSave = async (form: any) => {
     const payload = {
       nom: form.nom.trim(),
       prenom: form.prenom.trim(),
       telephone: form.telephone.trim(),
-      email: form.email.trim(),
+      email: form.email?.trim() || null,
       formation: form.formation.trim(),
       branche_filleul: form.branche_filleul || null,
       type_parrainage: form.type_parrainage,
@@ -119,9 +119,11 @@ export default function EspacePage() {
     };
 
     if (editingFilleul) {
-      await supabase.from("filleuls").update(payload).eq("id", editingFilleul.id);
+      const { error } = await supabase.from("filleuls").update(payload).eq("id", editingFilleul.id);
+      if (error) { alert("Erreur modification : " + error.message); return; }
     } else {
-      await supabase.from("filleuls").insert(payload);
+      const { error } = await supabase.from("filleuls").insert(payload);
+      if (error) { alert("Erreur enregistrement : " + error.message); return; }
     }
     setShowForm(false);
     setEditingFilleul(null);
