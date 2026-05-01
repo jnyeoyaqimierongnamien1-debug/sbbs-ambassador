@@ -48,6 +48,13 @@ const statutColors: Record<string, string> = {
   "Annulé": "bg-red-100 text-red-800",
 };
 
+const NAV_ITEMS = [
+  { title: "Médiathèque", description: "Fichiers · Vidéos · Docs", href: "/dashboard/mediatheque", icon: "📁", bg: "linear-gradient(135deg, #0F766E 0%, #14B8A6 100%)" },
+  { title: "Scripts WhatsApp", description: "Messages personnalisés", href: "/dashboard/scripts", icon: "📲", bg: "linear-gradient(135deg, #15803D 0%, #25D366 100%)" },
+  { title: "Exports & Rapports", description: "Excel · CSV · PDF", href: "/dashboard/export", icon: "📄", bg: "linear-gradient(135deg, #991B1B 0%, #CC0000 100%)" },
+  { title: "Paramètres", description: "Profil · Mot de passe · Photo", href: "/parametres", icon: "⚙️", bg: "linear-gradient(135deg, #1F2937 0%, #374151 100%)" },
+];
+
 export default function DirecteurPage() {
   const [directeur, setDirecteur] = useState<Directeur | null>(null);
   const [ambassadeurs, setAmbassadeurs] = useState<Ambassadeur[]>([]);
@@ -72,7 +79,6 @@ export default function DirecteurPage() {
     if (!dir) { router.push("/dashboard"); return; }
     setDirecteur(dir);
 
-    // Ambassadeurs de cette branche
     const { data: ambs } = await supabase
       .from("ambassadeurs").select("*")
       .eq("branche", dir.branche)
@@ -80,14 +86,12 @@ export default function DirecteurPage() {
 
     setAmbassadeurs(ambs || []);
 
-    // Filleuls de ces ambassadeurs
     if (ambs && ambs.length > 0) {
       const ambIds = ambs.map(a => a.id);
       const { data: fils } = await supabase
         .from("filleuls").select("*")
         .in("ambassadeur_id", ambIds)
         .order("created_at", { ascending: false });
-
       setFilleuls(fils || []);
     }
 
@@ -99,17 +103,11 @@ export default function DirecteurPage() {
     router.push("/login");
   };
 
-  // Stats globales
   const totalFilleuls = filleuls.filter(f => f.statut !== "Annulé").length;
   const totalConfirmes = filleuls.filter(f => f.statut === "Payé").length;
-  const totalCommissions = filleuls
-    .filter(f => f.statut === "Payé")
-    .reduce((s, f) => s + (Number(f.montant) || 0), 0);
-  const totalAttente = filleuls
-    .filter(f => ["En attente", "Inscrit"].includes(f.statut))
-    .reduce((s, f) => s + (Number(f.montant) || 0), 0);
+  const totalCommissions = filleuls.filter(f => f.statut === "Payé").reduce((s, f) => s + (Number(f.montant) || 0), 0);
+  const totalAttente = filleuls.filter(f => ["En attente", "Inscrit"].includes(f.statut)).reduce((s, f) => s + (Number(f.montant) || 0), 0);
 
-  // Classement interne
   const classement = ambassadeurs
     .map(a => {
       const mesFilleuls = filleuls.filter(f => f.ambassadeur_id === a.id && f.statut !== "Annulé");
@@ -135,13 +133,13 @@ export default function DirecteurPage() {
       {/* Header */}
       <header className="bg-sbbs-blue text-white px-6 py-4 flex items-center justify-between shadow-md">
         <div className="flex items-center gap-3">
-          <img src="/LOGO%20SBBS%20PNG.webp" alt="SBBS" className="w-10 h-10 rounded-full border-2 border-sbbs-gold" />
+          <img src="/LOGO%20SBBS%20PNG.webp" alt="SBBS" className="w-10 h-10 rounded-full border-2 border-sbbs-gold object-cover" />
           <div>
             <h1 className="font-bold text-lg leading-none">Espace Directeur</h1>
             <p className="text-xs text-blue-200">{directeur?.branche}</p>
           </div>
         </div>
-        <button onClick={handleLogout} className="text-sm bg-white text-sbbs-blue px-4 py-1.5 rounded-lg font-semibold hover:bg-gray-100 transition">
+        <button onClick={handleLogout} className="text-sm bg-white text-sbbs-blue px-4 py-1.5 rounded-xl font-semibold hover:bg-gray-100 transition">
           Déconnexion
         </button>
       </header>
@@ -150,7 +148,7 @@ export default function DirecteurPage() {
 
         {/* Carte profil */}
         <div className="card mb-5 flex items-center gap-4 flex-wrap">
-          <div className="w-14 h-14 rounded-full bg-sbbs-blue flex items-center justify-center text-white text-xl font-bold">
+          <div className="w-14 h-14 rounded-full bg-sbbs-blue flex items-center justify-center text-white text-xl font-bold shrink-0">
             {directeur?.prenom?.[0]}{directeur?.nom?.[0]}
           </div>
           <div className="flex-1">
@@ -166,22 +164,43 @@ export default function DirecteurPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-          <div className="card border-l-4 border-sbbs-blue text-center">
+          <div className="card border-l-4 border-sbbs-blue text-center py-3">
             <p className="text-3xl font-bold text-sbbs-blue">{ambassadeurs.length}</p>
             <p className="text-xs text-gray-500 mt-1">Ambassadeurs</p>
           </div>
-          <div className="card border-l-4 border-sbbs-gold text-center">
+          <div className="card border-l-4 border-sbbs-gold text-center py-3">
             <p className="text-3xl font-bold text-sbbs-gold">{totalFilleuls}</p>
             <p className="text-xs text-gray-500 mt-1">Filleuls actifs</p>
           </div>
-          <div className="card border-l-4 border-sbbs-red text-center">
-            <p className="text-lg font-bold text-sbbs-red">{totalAttente.toLocaleString()}</p>
-            <p className="text-xs text-gray-500 mt-1">Commissions en attente (FCFA)</p>
+          <div className="card border-l-4 border-sbbs-red text-center py-3">
+            <p className="text-base font-bold text-sbbs-red">{totalAttente.toLocaleString()}</p>
+            <p className="text-xs text-gray-500 mt-1">En attente (FCFA)</p>
           </div>
-          <div className="card border-l-4 border-green-500 text-center">
-            <p className="text-lg font-bold text-green-600">{totalCommissions.toLocaleString()}</p>
-            <p className="text-xs text-gray-500 mt-1">Commissions payées (FCFA)</p>
+          <div className="card border-l-4 border-green-500 text-center py-3">
+            <p className="text-base font-bold text-green-600">{totalCommissions.toLocaleString()}</p>
+            <p className="text-xs text-gray-500 mt-1">Payées (FCFA)</p>
           </div>
+        </div>
+
+        {/* ─── Navigation colorée compacte ─── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-6">
+          {NAV_ITEMS.map(item => (
+            <button
+              key={item.href}
+              onClick={() => router.push(item.href)}
+              className="group relative flex items-center gap-2.5 px-3 py-2.5 rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 text-left overflow-hidden"
+              style={{ background: item.bg }}
+            >
+              <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity rounded-2xl" />
+              <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-base shrink-0">
+                {item.icon}
+              </div>
+              <div className="min-w-0">
+                <p className="font-bold text-xs text-white leading-tight">{item.title}</p>
+                <p className="text-xs text-white/70 truncate mt-0.5 hidden sm:block">{item.description}</p>
+              </div>
+            </button>
+          ))}
         </div>
 
         {/* Tabs */}
@@ -195,9 +214,9 @@ export default function DirecteurPage() {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`text-sm px-4 py-2 rounded-lg font-medium transition ${
+              className={`text-sm px-4 py-2 rounded-xl font-medium transition ${
                 activeTab === tab.key
-                  ? "bg-sbbs-blue text-white"
+                  ? "bg-sbbs-blue text-white shadow-sm"
                   : "bg-white text-gray-600 border border-gray-200 hover:border-sbbs-blue"
               }`}
             >
@@ -220,7 +239,7 @@ export default function DirecteurPage() {
                 </div>
                 <div className="w-full bg-gray-100 rounded-full h-2">
                   <div
-                    className="bg-green-500 h-2 rounded-full"
+                    className="bg-green-500 h-2 rounded-full transition-all"
                     style={{ width: `${totalFilleuls > 0 ? (totalConfirmes / totalFilleuls) * 100 : 0}%` }}
                   />
                 </div>
@@ -233,7 +252,6 @@ export default function DirecteurPage() {
               </div>
             </div>
 
-            {/* Top 3 */}
             <div className="card">
               <h3 className="font-bold text-sbbs-blue mb-3">🏆 Top 3 Ambassadeurs</h3>
               {classement.slice(0, 3).map((a, i) => (
@@ -266,7 +284,7 @@ export default function DirecteurPage() {
               return (
                 <div key={a.id} className="card border border-gray-100">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-sbbs-blue flex items-center justify-center text-white font-bold text-sm">
+                    <div className="w-10 h-10 rounded-full bg-sbbs-blue flex items-center justify-center text-white font-bold text-sm shrink-0">
                       {a.prenom?.[0]}{a.nom?.[0]}
                     </div>
                     <div className="flex-1">
@@ -287,12 +305,11 @@ export default function DirecteurPage() {
         {/* Filleuls */}
         {activeTab === "filleuls" && (
           <div>
-            {/* Filtre par ambassadeur */}
             <div className="mb-4">
               <select
                 value={selectedAmb || ""}
                 onChange={e => setSelectedAmb(e.target.value || null)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sbbs-blue"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sbbs-blue"
               >
                 <option value="">— Tous les ambassadeurs —</option>
                 {ambassadeurs.map(a => (
@@ -345,7 +362,7 @@ export default function DirecteurPage() {
                   <span className="text-2xl w-8 text-center">
                     {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`}
                   </span>
-                  <div className="w-10 h-10 rounded-full bg-sbbs-blue flex items-center justify-center text-white font-bold text-sm">
+                  <div className="w-10 h-10 rounded-full bg-sbbs-blue flex items-center justify-center text-white font-bold text-sm shrink-0">
                     {a.prenom?.[0]}{a.nom?.[0]}
                   </div>
                   <div className="flex-1">
@@ -358,11 +375,10 @@ export default function DirecteurPage() {
                     <p className="text-xs text-green-600 font-medium">{a.commissions.toLocaleString()} FCFA</p>
                   </div>
                 </div>
-                {/* Barre de progression */}
                 <div className="mt-2">
                   <div className="w-full bg-gray-100 rounded-full h-1.5">
                     <div
-                      className="bg-sbbs-blue h-1.5 rounded-full"
+                      className="bg-sbbs-blue h-1.5 rounded-full transition-all"
                       style={{ width: `${classement[0]?.nb_filleuls > 0 ? (a.nb_filleuls / classement[0].nb_filleuls) * 100 : 0}%` }}
                     />
                   </div>
