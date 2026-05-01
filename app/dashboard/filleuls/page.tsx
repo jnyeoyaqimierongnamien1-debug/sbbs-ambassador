@@ -76,9 +76,15 @@ export default function FilleulsPage() {
       setFilleuls((prev) => prev.map((f) => f.id === editId ? { ...f, ...form } as typeof f : f));
       setEditId(null);
     } else {
-      const { data, error } = await supabase.from("filleuls").insert([form]).select("*, ambassadeurs(nom, prenom)").single();
-      if (error) { setError(error.message); setSaving(false); return; }
-      setFilleuls([data, ...filleuls]);
+      const { error } = await supabase.from("filleuls").insert([form]);
+if (error) { setError(error.message); setSaving(false); return; }
+
+// Recharger tous les filleuls avec la jointure
+const { data: updated } = await supabase
+  .from("filleuls")
+  .select("*, ambassadeurs(nom, prenom)")
+  .order("created_at", { ascending: false });
+setFilleuls(updated ?? []);
     }
 
     setForm({ ambassadeur_id: "", nom: "", prenom: "", telephone: "", formation: "", statut: "En attente" });
