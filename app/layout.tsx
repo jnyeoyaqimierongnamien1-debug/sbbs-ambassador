@@ -1,12 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import ChatFAB from "@/components/ChatFAB";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
-
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
@@ -56,9 +56,7 @@ export default function RootLayout({
         <meta name="msapplication-TileColor" content="#1A3A6C" />
         <meta name="msapplication-tap-highlight" content="no" />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -77,10 +75,7 @@ export default function RootLayout({
           }}
         />
         {children}
-        import ChatFAB from "@/components/ChatFAB";
-
-// Dans le JSX, avant </body> :
-<ChatFAB />
+        <ChatFAB />
       </body>
     </html>
   );
