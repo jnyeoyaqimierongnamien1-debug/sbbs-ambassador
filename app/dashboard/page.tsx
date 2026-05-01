@@ -11,17 +11,20 @@ type Stats = {
   commissionsPayees: number;
 };
 
+type UserRole = "admin" | "ambassadeur" | "directeur";
+
 const NAV_ITEMS = [
-  { title: "Ambassadeurs", description: "Gérer les ambassadeurs", href: "/dashboard/ambassadeurs", icon: "👥", gradient: "linear-gradient(135deg, #1A3A6C 0%, #2563EB 100%)" },
-  { title: "Filleuls", description: "Suivre les filleuls", href: "/dashboard/filleuls", icon: "🎓", gradient: "linear-gradient(135deg, #B7860B 0%, #C9A84C 100%)" },
-  { title: "Commissions", description: "Gérer les paiements", href: "/dashboard/commissions", icon: "💰", gradient: "linear-gradient(135deg, #5B21B6 0%, #7C3AED 100%)" },
-  { title: "Classement", description: "Podium ambassadeurs", href: "/dashboard/classement", icon: "🏆", gradient: "linear-gradient(135deg, #C2410C 0%, #EA580C 100%)" },
-  { title: "Statistiques", description: "Analyses en temps réel", href: "/dashboard/statistiques", icon: "📊", gradient: "linear-gradient(135deg, #0369A1 0%, #0284C7 100%)" },
-  { title: "Validations", description: "Candidatures ambassadeurs", href: "/dashboard/validations", icon: "✅", gradient: "linear-gradient(135deg, #1A3A6C 0%, #1E40AF 100%)" },
-  { title: "Validations Directeurs", description: "Candidatures directeurs", href: "/dashboard/validations-directeurs", icon: "🏫", gradient: "linear-gradient(135deg, #78350F 0%, #92400E 100%)" },
-  { title: "Scripts WhatsApp", description: "Messages personnalisés", href: "/dashboard/scripts", icon: "📲", gradient: "linear-gradient(135deg, #15803D 0%, #25D366 100%)" },
-  { title: "Exports & Rapports", description: "Excel · CSV · PDF", href: "/dashboard/export", icon: "📄", gradient: "linear-gradient(135deg, #991B1B 0%, #CC0000 100%)" },
-  { title: "Paramètres", description: "Profil · Mot de passe", href: "/parametres", icon: "⚙️", gradient: "linear-gradient(135deg, #1F2937 0%, #374151 100%)" },
+  { title: "Ambassadeurs", description: "Gérer les ambassadeurs", href: "/dashboard/ambassadeurs", icon: "👥", bg: "#1A3A6C", text: "#fff" },
+  { title: "Filleuls", description: "Suivre les filleuls", href: "/dashboard/filleuls", icon: "🎓", bg: "#C9A84C", text: "#fff" },
+  { title: "Parrainages", description: "Suivre les parrainages", href: "/dashboard/parrainages", icon: "🤝", bg: "#059669", text: "#fff" },
+  { title: "Commissions", description: "Gérer les paiements", href: "/dashboard/commissions", icon: "💰", bg: "#7C3AED", text: "#fff" },
+  { title: "Classement", description: "Podium ambassadeurs", href: "/dashboard/classement", icon: "🏆", bg: "#EA580C", text: "#fff" },
+  { title: "Statistiques", description: "Analyses en temps réel", href: "/dashboard/statistiques", icon: "📊", bg: "#0284C7", text: "#fff" },
+  { title: "Validations", description: "Candidatures ambassadeurs", href: "/dashboard/validations", icon: "✅", bg: "#16A34A", text: "#fff" },
+  { title: "Validations Directeurs", description: "Candidatures directeurs", href: "/dashboard/validations-directeurs", icon: "🏫", bg: "#92400E", text: "#fff" },
+  { title: "Scripts WhatsApp", description: "Messages personnalisés", href: "/dashboard/scripts", icon: "📲", bg: "#25D366", text: "#fff" },
+  { title: "Exports & Rapports", description: "Excel · CSV · PDF", href: "/dashboard/export", icon: "📄", bg: "#CC0000", text: "#fff" },
+  { title: "Paramètres", description: "Profil · Mot de passe", href: "/parametres", icon: "⚙️", bg: "#374151", text: "#fff" },
 ];
 
 export default function DashboardPage() {
@@ -34,8 +37,56 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [showStats, setShowStats] = useState(true);
+
+  // Photo & identité utilisateur
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>("");
+  const [userRole, setUserRole] = useState<UserRole>("admin");
+  const [userInitials, setUserInitials] = useState<string>("SA");
+
   const router = useRouter();
   const supabase = createClient();
+
+  // ─── Chargement du profil utilisateur (photo incluse)
+  const fetchUserProfile = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Directeur ?
+    const { data: dir } = await supabase
+      .from("directeurs")
+      .select("nom, prenom, photo_url")
+      .eq("user_id", user.id)
+      .single();
+    if (dir) {
+      setUserRole("directeur");
+      setUserName(`${dir.prenom} ${dir.nom}`);
+      setUserInitials(`${dir.prenom?.[0] || ""}${dir.nom?.[0] || ""}`);
+      if (dir.photo_url) setPhotoUrl(`${dir.photo_url}?t=${Date.now()}`);
+      return;
+    }
+
+    // Ambassadeur ?
+    const { data: amb } = await supabase
+      .from("ambassadeurs")
+      .select("nom, prenom, photo_url")
+      .eq("user_id", user.id)
+      .single();
+    if (amb) {
+      setUserRole("ambassadeur");
+      setUserName(`${amb.prenom} ${amb.nom}`);
+      setUserInitials(`${amb.prenom?.[0] || ""}${amb.nom?.[0] || ""}`);
+      if (amb.photo_url) setPhotoUrl(`${amb.photo_url}?t=${Date.now()}`);
+      return;
+    }
+
+    // Admin
+    setUserRole("admin");
+    setUserName("Admin SBBS");
+    setUserInitials("SA");
+    const adminPhoto = user.user_metadata?.photo_url;
+    if (adminPhoto) setPhotoUrl(`${adminPhoto}?t=${Date.now()}`);
+  };
 
   const fetchStats = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -70,13 +121,16 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
+    fetchUserProfile();
     fetchStats();
+
     const channel = supabase
       .channel("dashboard-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "ambassadeurs" }, () => { fetchStats(); })
       .on("postgres_changes", { event: "*", schema: "public", table: "filleuls" }, () => { fetchStats(); })
       .on("postgres_changes", { event: "*", schema: "public", table: "commissions" }, () => { fetchStats(); })
       .subscribe();
+
     return () => { supabase.removeChannel(channel); };
   }, [fetchStats]);
 
@@ -93,37 +147,63 @@ export default function DashboardPage() {
     );
   }
 
+  const roleLabel = userRole === "admin" ? "Administrateur" : userRole === "directeur" ? "Directeur" : "Ambassadeur";
+
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* Header */}
+      {/* ─── HEADER ─── */}
       <header className="bg-sbbs-blue text-white px-6 py-4 flex items-center justify-between shadow-md">
         <div className="flex items-center gap-3">
           <img src="/LOGO%20SBBS%20PNG.webp" alt="SBBS" className="w-10 h-10 rounded-full object-cover border-2 border-sbbs-gold" />
           <div>
             <h1 className="font-bold text-lg leading-none">SBBS Ambassador</h1>
-            <p className="text-xs text-blue-200">Tableau de bord Admin</p>
+            <p className="text-xs text-blue-200">Tableau de bord · {roleLabel}</p>
           </div>
         </div>
+
         <div className="flex items-center gap-3">
+          {/* Indicateur temps réel */}
           <div className="flex items-center gap-1.5 bg-green-500/20 border border-green-400/40 px-3 py-1 rounded-full">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
             <span className="text-xs text-green-300 font-medium">En direct</span>
           </div>
-          <button onClick={handleLogout} className="text-sm bg-white text-sbbs-blue px-4 py-1.5 rounded-lg font-semibold hover:bg-gray-100 transition">
+
+          {/* Avatar utilisateur cliquable → Paramètres */}
+          <button
+            onClick={() => router.push("/parametres")}
+            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 transition rounded-full pl-1 pr-3 py-1"
+            title="Mes paramètres"
+          >
+            <div className="w-8 h-8 rounded-full border-2 border-sbbs-gold overflow-hidden bg-sbbs-gold flex items-center justify-center shrink-0">
+              {photoUrl ? (
+                <img src={photoUrl} alt="Photo profil" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-white text-xs font-bold">{userInitials}</span>
+              )}
+            </div>
+            <span className="text-xs text-white font-medium hidden sm:block max-w-[100px] truncate">
+              {userName}
+            </span>
+          </button>
+
+          <button
+            onClick={handleLogout}
+            className="text-sm bg-white text-sbbs-blue px-4 py-1.5 rounded-lg font-semibold hover:bg-gray-100 transition"
+          >
             Déconnexion
           </button>
         </div>
       </header>
 
-      {/* Bandeau photo */}
+      {/* ─── BANDEAU PHOTO ─── */}
       <div className="relative w-full h-56 overflow-hidden">
         <img src="/Banni%C3%A8re%20bandeau.jpg" alt="Diplômés SBBS" className="w-full h-full object-cover object-top" />
         <div className="absolute inset-0 bg-gradient-to-r from-sbbs-blue/85 via-sbbs-blue/50 to-sbbs-blue/20" />
         <div className="absolute inset-0 flex items-center px-8">
           <div>
             <h2 className="text-2xl font-bold text-white drop-shadow-lg">
-              Bienvenue sur <span style={{ color: "#C9A84C" }}>SBBS Ambassador</span>
+              Bienvenue, <span style={{ color: "#C9A84C" }}>{userName}</span>
             </h2>
             <p className="font-bold text-base mt-1 drop-shadow" style={{ color: "#CC0000" }}>
               Intelligence et Expertise des Affaires
@@ -138,18 +218,29 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-        <div className="absolute top-4 right-4">
-          <img src="/LOGO%20SBBS%20PNG.webp" alt="SBBS" className="w-12 h-12 rounded-full border-2 object-cover" style={{ borderColor: "#C9A84C" }} />
+
+        {/* Photo de profil sur le bandeau */}
+        <div className="absolute bottom-[-28px] right-6">
+          <div className="w-16 h-16 rounded-full border-4 border-white shadow-lg overflow-hidden bg-sbbs-blue flex items-center justify-center">
+            {photoUrl ? (
+              <img src={photoUrl} alt="Photo profil" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-white text-xl font-bold">{userInitials}</span>
+            )}
+          </div>
         </div>
       </div>
 
-      <main className="max-w-5xl mx-auto px-4 py-6">
+      {/* Espacement pour la photo qui déborde */}
+      <div className="h-10" />
+
+      <main className="max-w-5xl mx-auto px-4 py-2">
 
         {/* Vue d'ensemble — Accordéon */}
-        <div className="mb-6">
+        <div className="mb-5">
           <button
             onClick={() => setShowStats(s => !s)}
-            className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-5 py-3.5 hover:border-sbbs-blue transition shadow-sm"
+            className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-3 hover:border-sbbs-blue transition shadow-sm"
           >
             <div className="flex items-center gap-3">
               <span className="font-bold text-sbbs-blue text-lg">📊 Vue d'ensemble</span>
@@ -170,25 +261,20 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Navigation — boutons premium */}
-        <h2 className="text-xl font-bold text-sbbs-blue mb-4">Navigation</h2>
+        {/* Navigation — boutons colorés */}
+        <h2 className="text-xl font-bold text-sbbs-blue mb-3">Navigation</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           {NAV_ITEMS.map(item => (
             <button
               key={item.href}
               onClick={() => router.push(item.href)}
-              className="group relative flex items-center gap-3 px-4 py-4 rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-200 text-left overflow-hidden"
-              style={{ background: item.gradient }}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl shadow-sm hover:shadow-md hover:scale-105 transition-all text-left"
+              style={{ backgroundColor: item.bg, color: item.text }}
             >
-              {/* Effet brillance */}
-              <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity rounded-2xl" />
-              {/* Cercle icône */}
-              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-xl shrink-0">
-                {item.icon}
-              </div>
+              <span className="text-2xl shrink-0">{item.icon}</span>
               <div className="min-w-0">
-                <p className="font-bold text-sm text-white leading-tight">{item.title}</p>
-                <p className="text-xs text-white/70 truncate mt-0.5">{item.description}</p>
+                <p className="font-bold text-sm leading-tight">{item.title}</p>
+                <p className="text-xs opacity-75 truncate">{item.description}</p>
               </div>
             </button>
           ))}
