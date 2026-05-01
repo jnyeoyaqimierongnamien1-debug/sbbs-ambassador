@@ -77,7 +77,11 @@ export default function FilleulsPage() {
       setEditId(null);
     } else {
       const { error } = await supabase.from("filleuls").insert([form]);
-if (error) { setError(error.message); setSaving(false); return; }
+if (error) {
+  setError("Erreur Supabase : " + error.message + " | Code : " + error.code);
+  setSaving(false);
+  return;
+}
 
 // Recharger tous les filleuls avec la jointure
 const { data: updated } = await supabase
