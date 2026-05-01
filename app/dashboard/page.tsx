@@ -219,22 +219,12 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Photo de profil sur le bandeau */}
-        <div className="absolute bottom-[-28px] right-6">
-          <div className="w-16 h-16 rounded-full border-4 border-white shadow-lg overflow-hidden bg-sbbs-blue flex items-center justify-center">
-            {photoUrl ? (
-              <img src={photoUrl} alt="Photo profil" className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-white text-xl font-bold">{userInitials}</span>
-            )}
-          </div>
-        </div>
+      
       </div>
 
-      {/* Espacement pour la photo qui déborde */}
-      <div className="h-10" />
+      
 
-      <main className="max-w-5xl mx-auto px-4 py-2">
+      <main className="max-w-5xl mx-auto px-4 py-6">
 
         {/* Vue d'ensemble — Accordéon */}
         <div className="mb-5">
