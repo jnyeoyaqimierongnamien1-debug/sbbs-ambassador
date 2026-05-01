@@ -59,42 +59,51 @@ export default function FilleulsPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async () => {
-    if (!form.ambassadeur_id || !form.nom || !form.prenom || !form.formation) {
-      setError("Ambassadeur, prénom, nom et formation sont obligatoires.");
-      return;
-    }
-    setSaving(true);
-    setError("");
+const handleSubmit = async () => {
+  if (!form.ambassadeur_id || !form.nom || !form.prenom) {
+    setError("Ambassadeur, prénom et nom sont obligatoires.");
+    return;
+  }
+  setSaving(true);
+  setError("");
 
-    if (editId) {
-      const { error } = await supabase.from("filleuls").update({
-        nom: form.nom, prenom: form.prenom, telephone: form.telephone,
-        formation: form.formation, statut: form.statut, ambassadeur_id: form.ambassadeur_id,
-      }).eq("id", editId);
-      if (error) { setError(error.message); setSaving(false); return; }
-      setFilleuls((prev) => prev.map((f) => f.id === editId ? { ...f, ...form } as typeof f : f));
-      setEditId(null);
-    } else {
-      const { error } = await supabase.from("filleuls").insert([form]);
-if (error) {
-  setError("Erreur Supabase : " + error.message + " | Code : " + error.code);
+  if (editId) {
+    const { error } = await supabase.from("filleuls").update({
+      nom: form.nom.trim().toUpperCase(),
+      prenom: form.prenom.trim(),
+      telephone: form.telephone.trim(),
+      formation: form.formation.trim(),
+      statut: form.statut,
+      ambassadeur_id: form.ambassadeur_id,
+    }).eq("id", editId);
+    if (error) { setError("Erreur : " + error.message); setSaving(false); return; }
+    setEditId(null);
+  } else {
+    const { error } = await supabase.from("filleuls").insert({
+      ambassadeur_id: form.ambassadeur_id,
+      nom: form.nom.trim().toUpperCase(),
+      prenom: form.prenom.trim(),
+      telephone: form.telephone.trim(),
+      formation: form.formation.trim(),
+      statut: form.statut,
+    });
+    if (error) { setError("Erreur : " + error.message); setSaving(false); return; }
+  }
+
+  // Recharger la liste
+  const { data: updated, error: fetchError } = await supabase
+    .from("filleuls")
+    .select("*, ambassadeurs(nom, prenom)")
+    .order("created_at", { ascending: false });
+
+  if (!fetchError && updated && updated.length > 0) {
+    setFilleuls(updated);
+  }
+
+  setForm({ ambassadeur_id: "", nom: "", prenom: "", telephone: "", formation: "", statut: "En attente" });
+  setShowForm(false);
   setSaving(false);
-  return;
-}
-
-// Recharger tous les filleuls avec la jointure
-const { data: updated } = await supabase
-  .from("filleuls")
-  .select("*, ambassadeurs(nom, prenom)")
-  .order("created_at", { ascending: false });
-setFilleuls(updated ?? []);
-    }
-
-    setForm({ ambassadeur_id: "", nom: "", prenom: "", telephone: "", formation: "", statut: "En attente" });
-    setShowForm(false);
-    setSaving(false);
-  };
+};
 
   const filtered = filleuls.filter((f) =>
     `${f.nom} ${f.prenom} ${f.formation}`.toLowerCase().includes(search.toLowerCase())
