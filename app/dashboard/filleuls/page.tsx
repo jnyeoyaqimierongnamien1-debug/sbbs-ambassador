@@ -45,7 +45,7 @@ export default function FilleulsPage() {
 
       const [{ data: fill }, { data: amb }] = await Promise.all([
         supabase.from("filleuls").select("*, ambassadeurs(nom, prenom)").order("created_at", { ascending: false }),
-        supabase.from("ambassadeurs").select("id, nom, prenom").eq("statut", "actif").order("nom"),
+        supabase.from("ambassadeurs").select("id, nom, prenom").order("nom"),
       ]);
 
       setFilleuls(fill ?? []);
