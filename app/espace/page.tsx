@@ -53,6 +53,13 @@ const parrainageColors: Record<string, string> = {
   "Assisté": "bg-blue-100 text-blue-700",
 };
 
+const NAV_ITEMS = [
+  { title: "Médiathèque", description: "Formations · Docs", href: "/dashboard/mediatheque", icon: "📁", bg: "linear-gradient(135deg, #0F766E 0%, #14B8A6 100%)" },
+  { title: "Scripts WhatsApp", description: "10 messages", href: "/espace/scripts", icon: "📲", bg: "linear-gradient(135deg, #15803D 0%, #25D366 100%)" },
+  { title: "Exports & Rapports", description: "Excel · CSV · PDF", href: "/espace/export", icon: "📄", bg: "linear-gradient(135deg, #991B1B 0%, #CC0000 100%)" },
+  { title: "Paramètres", description: "Profil · Photo", href: "/parametres", icon: "⚙️", bg: "linear-gradient(135deg, #1F2937 0%, #374151 100%)" },
+];
+
 export default function EspacePage() {
   const [ambassadeur, setAmbassadeur] = useState<Ambassadeur | null>(null);
   const [filleuls, setFilleuls]       = useState<Filleul[]>([]);
@@ -84,7 +91,6 @@ export default function EspacePage() {
 
     setFilleuls(fils || []);
 
-    // Calcul rang
     const { data: tousFilleuls } = await supabase
       .from("filleuls").select("ambassadeur_id, statut");
 
@@ -97,13 +103,12 @@ export default function EspacePage() {
     setLoading(false);
   };
 
-  // Stats
   const filleulsActifs     = filleuls.filter(f => f.statut !== "Annulé").length;
   const filleulsPayes      = filleuls.filter(f => f.statut === "Payé").length;
   const commissionsPayees  = filleuls.filter(f => f.statut === "Payé").reduce((s, f) => s + (Number(f.montant) || 0), 0);
   const commissionsAttente = filleuls.filter(f => ["En attente", "Inscrit"].includes(f.statut)).reduce((s, f) => s + (Number(f.montant) || 0), 0);
 
-const handleSave = async (form: any) => {
+  const handleSave = async (form: any) => {
     const payload = {
       nom: form.nom.trim(),
       prenom: form.prenom.trim(),
@@ -165,7 +170,7 @@ const handleSave = async (form: any) => {
             <p className="text-xs text-blue-200">{ambassadeur?.prenom} {ambassadeur?.nom}</p>
           </div>
         </div>
-        <button onClick={handleLogout} className="text-sm bg-white text-sbbs-blue px-4 py-1.5 rounded-lg font-semibold hover:bg-gray-100 transition">
+        <button onClick={handleLogout} className="text-sm bg-white text-sbbs-blue px-4 py-1.5 rounded-xl font-semibold hover:bg-gray-100 transition">
           Déconnexion
         </button>
       </header>
@@ -194,61 +199,52 @@ const handleSave = async (form: any) => {
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-          <div className="card border-l-4 border-sbbs-blue text-center">
+          <div className="card border-l-4 border-sbbs-blue text-center py-3">
             <p className="text-3xl font-bold text-sbbs-blue">{filleulsActifs}</p>
             <p className="text-xs text-gray-500 mt-1">Filleuls actifs</p>
           </div>
-          <div className="card border-l-4 border-green-500 text-center">
+          <div className="card border-l-4 border-green-500 text-center py-3">
             <p className="text-3xl font-bold text-green-600">{filleulsPayes}</p>
             <p className="text-xs text-gray-500 mt-1">Confirmés</p>
           </div>
-          <div className="card border-l-4 border-sbbs-red text-center">
+          <div className="card border-l-4 border-sbbs-red text-center py-3">
             <p className="text-xl font-bold text-sbbs-red">{commissionsAttente.toLocaleString()}</p>
             <p className="text-xs text-gray-500 mt-1">En attente (FCFA)</p>
           </div>
-          <div className="card border-l-4 border-sbbs-gold text-center">
+          <div className="card border-l-4 border-sbbs-gold text-center py-3">
             <p className="text-xl font-bold text-sbbs-gold">{commissionsPayees.toLocaleString()}</p>
             <p className="text-xs text-gray-500 mt-1">Payées (FCFA)</p>
           </div>
         </div>
 
-        {/* Boutons navigation */}
-        <div className="grid grid-cols-2 gap-3 mb-5">
-          <div
-            onClick={() => router.push("/espace/scripts")}
-            className="card cursor-pointer border border-green-200 bg-green-50 hover:bg-green-100 transition flex items-center gap-3"
-          >
-            <span className="text-2xl">📲</span>
-            <div>
-              <p className="font-bold text-green-700 text-sm">Scripts WhatsApp</p>
-              <p className="text-xs text-gray-500">10 messages personnalisés</p>
-            </div>
-          </div>
-          <div
-            onClick={() => router.push("/espace/export")}
-            className="card cursor-pointer border border-blue-200 bg-blue-50 hover:bg-blue-100 transition flex items-center gap-3"
-          >
-            <span className="text-2xl">📊</span>
-            <div>
-              <p className="font-bold text-sbbs-blue text-sm">Exports & Rapports</p>
-              <p className="text-xs text-gray-500">Excel · CSV · PDF</p>
-            </div>
-          </div>
+        {/* ─── Navigation colorée compacte ─── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-6">
+          {NAV_ITEMS.map(item => (
+            <button
+              key={item.href}
+              onClick={() => router.push(item.href)}
+              className="group relative flex items-center gap-2.5 px-3 py-2.5 rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 text-left overflow-hidden"
+              style={{ background: item.bg }}
+            >
+              <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity rounded-2xl" />
+              <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-base shrink-0">
+                {item.icon}
+              </div>
+              <div className="min-w-0">
+                <p className="font-bold text-xs text-white leading-tight">{item.title}</p>
+                <p className="text-xs text-white/70 truncate mt-0.5 hidden sm:block">{item.description}</p>
+              </div>
+            </button>
+          ))}
         </div>
-<div
-  onClick={() => router.push("/parametres")}
-  className="card cursor-pointer border border-gray-200 bg-gray-50 hover:bg-gray-100 transition flex items-center gap-3"
->
-  <span className="text-2xl">⚙️</span>
-  <div>
-    <p className="font-bold text-gray-700 text-sm">Paramètres</p>
-    <p className="text-xs text-gray-500">Profil · Mot de passe · Photo</p>
-  </div>
-</div>
+
         {/* Liste filleuls */}
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-bold text-sbbs-blue text-lg">Mes Filleuls ({filleuls.length})</h3>
-          <button onClick={() => { setEditingFilleul(null); setShowForm(true); }} className="btn-primary text-sm px-4 py-2">
+          <button
+            onClick={() => { setEditingFilleul(null); setShowForm(true); }}
+            className="btn-primary text-sm px-4 py-2 rounded-xl"
+          >
             + Ajouter un filleul
           </button>
         </div>
@@ -257,7 +253,7 @@ const handleSave = async (form: any) => {
           <div className="card text-center text-gray-400 py-12">
             <p className="text-5xl mb-3">🎓</p>
             <p className="font-medium">Aucun filleul enregistré pour le moment.</p>
-            <button onClick={() => setShowForm(true)} className="btn-primary text-sm mt-5 px-6 py-2">
+            <button onClick={() => setShowForm(true)} className="btn-primary text-sm mt-5 px-6 py-2 rounded-xl">
               Enregistrer mon premier filleul
             </button>
           </div>
@@ -289,21 +285,21 @@ const handleSave = async (form: any) => {
                 <div className="flex gap-2 flex-wrap shrink-0">
                   <button
                     onClick={() => { setEditingFilleul(f); setShowForm(true); }}
-                    className="text-xs px-3 py-1.5 rounded-lg bg-blue-50 text-sbbs-blue font-medium hover:bg-blue-100 transition"
+                    className="text-xs px-3 py-1.5 rounded-xl bg-blue-50 text-sbbs-blue font-medium hover:bg-blue-100 transition"
                   >
                     ✏️ Modifier
                   </button>
                   {f.statut !== "Annulé" && (
                     <button
                       onClick={() => handleCancel(f.id)}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-yellow-50 text-yellow-700 font-medium hover:bg-yellow-100 transition"
+                      className="text-xs px-3 py-1.5 rounded-xl bg-yellow-50 text-yellow-700 font-medium hover:bg-yellow-100 transition"
                     >
                       🚫 Annuler
                     </button>
                   )}
                   <button
                     onClick={() => handleDelete(f.id)}
-                    className="text-xs px-3 py-1.5 rounded-lg bg-red-50 text-sbbs-red font-medium hover:bg-red-100 transition"
+                    className="text-xs px-3 py-1.5 rounded-xl bg-red-50 text-sbbs-red font-medium hover:bg-red-100 transition"
                   >
                     🗑️ Supprimer
                   </button>
