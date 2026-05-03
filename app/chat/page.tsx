@@ -551,7 +551,7 @@ export default function ChatPage() {
 
         {/* ─── ZONE MESSAGES ─── */}
         {showMessages && (
-          <div className={`flex flex-col overflow-hidden ${hasSidebar ? "flex-1" : "w-full max-w-3xl mx-auto"}`}>
+          <div className={`flex flex-col overflow-hidden ${hasSidebar && sidebarOpen ? "flex-1" : "w-full max-w-3xl mx-auto"}`}>
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1" style={{ background: "#E5DDD5" }}>
