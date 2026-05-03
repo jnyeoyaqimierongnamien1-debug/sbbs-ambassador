@@ -47,10 +47,17 @@ export default function ChatPage() {
   const [unreadDirecteur, setUnreadDirecteur] = useState(0);
   const [uploadingFile, setUploadingFile] = useState(false);
 
+  // Sidebar
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
+  const [sidebarView, setSidebarView] = useState<"contacts" | "settings">("contacts");
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const supabase = createClient();
 
@@ -63,7 +70,7 @@ export default function ChatPage() {
       markAsRead();
 
       const channel = supabase
-        .channel("chat-realtime-v3")
+        .channel("chat-realtime-v4")
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
           fetchMessages();
           if (role === "directeur" || role === "admin") fetchContacts();
@@ -77,6 +84,10 @@ export default function ChatPage() {
   useEffect(() => {
     setTimeout(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, 100);
   }, [messages]);
+
+  useEffect(() => {
+    if (showSearch) setTimeout(() => searchRef.current?.focus(), 100);
+  }, [showSearch]);
 
   const fetchProfile = async () => {
     setLoading(true);
@@ -97,6 +108,7 @@ export default function ChatPage() {
       setRole("ambassadeur");
       setProfile({ ...amb, user_id: user.id });
       setActiveConv("direction");
+      setSidebarOpen(false);
       setLoading(false);
       return;
     }
@@ -221,13 +233,7 @@ export default function ChatPage() {
 
   const buildPayload = (extra: any = {}) => {
     const expediteurNom = role === "admin" ? "Direction SBBS" : `${profile.prenom} ${profile.nom}`;
-    let payload: any = {
-      expediteur_id: profile.user_id,
-      expediteur_nom: expediteurNom,
-      expediteur_role: role,
-      lu: false,
-      ...extra,
-    };
+    let payload: any = { expediteur_id: profile.user_id, expediteur_nom: expediteurNom, expediteur_role: role, lu: false, ...extra };
 
     if (role === "ambassadeur") {
       payload.destinataire_type = activeConv;
@@ -255,8 +261,7 @@ export default function ChatPage() {
   const handleSend = async () => {
     if (!newMessage.trim() || !profile || sending) return;
     setSending(true);
-    const payload = buildPayload({ contenu: newMessage.trim() });
-    await supabase.from("messages").insert(payload);
+    await supabase.from("messages").insert(buildPayload({ contenu: newMessage.trim() }));
     setNewMessage("");
     await fetchMessages();
     setSending(false);
@@ -265,25 +270,12 @@ export default function ChatPage() {
   const handleFileUpload = async (file: File, type: "fichier" | "photo" | "video") => {
     if (!file || !profile) return;
     setUploadingFile(true);
-
     const ext = file.name.split(".").pop()?.toLowerCase();
     const fileName = `chat/${profile.user_id}_${Date.now()}.${ext}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from("fichiers").upload(fileName, file, { upsert: false, contentType: file.type });
-
-    if (uploadError) { setUploadingFile(false); return; }
-
+    const { error } = await supabase.storage.from("fichiers").upload(fileName, file, { upsert: false, contentType: file.type });
+    if (error) { setUploadingFile(false); return; }
     const { data: urlData } = supabase.storage.from("fichiers").getPublicUrl(fileName);
-
-    const payload = buildPayload({
-      contenu: file.name,
-      fichier_url: urlData.publicUrl,
-      fichier_type: type,
-      fichier_nom: file.name,
-    });
-
-    await supabase.from("messages").insert(payload);
+    await supabase.from("messages").insert(buildPayload({ contenu: file.name, fichier_url: urlData.publicUrl, fichier_type: type, fichier_nom: file.name }));
     await fetchMessages();
     setUploadingFile(false);
   };
@@ -293,12 +285,10 @@ export default function ChatPage() {
     const now = new Date();
     const isToday = date.toDateString() === now.toDateString();
     if (isToday) return date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-    return date.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" }) + " " +
-      date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    return date.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" }) + " " + date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
   };
 
   const isMe = (msg: Message) => msg.expediteur_id === profile?.user_id;
-
   const canSend = () => {
     if (role === "ambassadeur") return true;
     if (role === "directeur") return activeConv === "direction" || !!activeContact;
@@ -308,12 +298,16 @@ export default function ChatPage() {
 
   const getConvTitle = () => {
     if (role === "ambassadeur") return activeConv === "direction" ? "Direction Commerciale & Marketing" : `Mon Directeur · ${profile?.branche}`;
-    if (role === "directeur") return activeConv === "direction" ? "Direction Commerciale & Marketing" : activeContact ? `${activeContact.prenom} ${activeContact.nom}` : "Sélectionnez";
+    if (role === "directeur") return activeConv === "direction" ? "Direction Commerciale & Marketing" : activeContact ? `${activeContact.prenom} ${activeContact.nom}` : "Messages";
     if (role === "admin" && activeContact) return `${activeContact.prenom} ${activeContact.nom}`;
     return "Messages";
   };
 
   const totalUnread = contacts.reduce((s, c) => s + c.unread, 0);
+  const filteredContacts = contacts.filter(c =>
+    `${c.prenom} ${c.nom} ${c.branche}`.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  const showSidebar = (role === "directeur" && activeConv === "ambassadeurs") || role === "admin";
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -324,14 +318,32 @@ export default function ChatPage() {
   return (
     <div className="h-screen flex flex-col overflow-hidden" style={{ background: "#F0F2F5" }}>
 
-      {/* Header */}
-      <header className="bg-sbbs-blue text-white px-5 py-3 flex items-center gap-3 shadow-lg shrink-0">
+      {/* ─── HEADER ─── */}
+      <header className="bg-sbbs-blue text-white px-4 py-3 flex items-center gap-3 shadow-lg shrink-0">
         <button onClick={() => router.back()} className="text-blue-200 hover:text-white text-sm transition shrink-0">← Retour</button>
         <img src="/LOGO%20SBBS%20PNG.webp" alt="SBBS" className="w-9 h-9 rounded-full border-2 border-sbbs-gold shrink-0" />
         <div className="flex-1 min-w-0">
           <h1 className="font-bold text-sm leading-none truncate">{getConvTitle()}</h1>
           <p className="text-xs text-blue-200 mt-0.5 capitalize">{role}</p>
         </div>
+        {/* Toggle sidebar — visible si admin ou directeur */}
+        {showSidebar && (
+          <button
+            onClick={() => setSidebarOpen(o => !o)}
+            className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/10 hover:bg-white/20 transition shrink-0"
+            title={sidebarOpen ? "Fermer le panneau" : "Ouvrir le panneau"}
+          >
+            {sidebarOpen ? (
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7M19 19l-7-7 7-7" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+              </svg>
+            )}
+          </button>
+        )}
         <div className="flex items-center gap-1.5 bg-green-500/20 border border-green-400/40 px-2.5 py-1 rounded-full shrink-0">
           <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
           <span className="text-xs text-green-300 font-medium">Live</span>
@@ -365,7 +377,7 @@ export default function ChatPage() {
             }`}>
             🏢 Direction
           </button>
-          <button onClick={() => setActiveConv("ambassadeurs")}
+          <button onClick={() => { setActiveConv("ambassadeurs"); setSidebarOpen(true); }}
             className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold transition border-b-2 ${
               activeConv !== "direction" ? "border-sbbs-blue text-sbbs-blue bg-blue-50" : "border-transparent text-gray-500"
             }`}>
@@ -377,45 +389,172 @@ export default function ChatPage() {
 
       <div className="flex flex-1 overflow-hidden">
 
-        {/* ─── LISTE CONTACTS ─── */}
-        {((role === "directeur" && activeConv === "ambassadeurs") || role === "admin") && (
-          <div className="w-72 shrink-0 bg-white border-r border-gray-200 overflow-y-auto shadow-sm">
-            <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-                {role === "admin" ? `${contacts.length} contacts` : `${contacts.length} ambassadeurs`}
-              </p>
-            </div>
-            {contacts.length === 0 ? (
-              <div className="p-8 text-center text-gray-400">
-                <p className="text-4xl mb-2">👥</p>
-                <p className="text-sm">Aucun contact</p>
-              </div>
-            ) : contacts.map(contact => (
-              <button key={contact.id}
-                onClick={() => { setActiveContact(contact); if (role === "directeur") setActiveConv("ambassadeur_conv"); }}
-                className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition border-b border-gray-100 ${
-                  activeContact?.id === contact.id ? "bg-blue-50 border-l-4 border-l-sbbs-blue" : "hover:bg-gray-50"
-                }`}>
-                <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm"
-                  style={{ background: contact.type === "directeur" ? "linear-gradient(135deg, #7C3AED, #A855F7)" : "linear-gradient(135deg, #1A3A6C, #2563EB)" }}>
-                  {contact.prenom?.[0]}{contact.nom?.[0]}
+        {/* ─── SIDEBAR PREMIUM ─── */}
+        {showSidebar && sidebarOpen && (
+          <div className="w-72 shrink-0 flex flex-col bg-white border-r border-gray-200 shadow-md transition-all duration-300 overflow-hidden">
+
+            {/* En-tête sidebar avec dégradé */}
+            <div className="shrink-0 px-4 py-3" style={{ background: "linear-gradient(135deg, #1A3A6C 0%, #2563EB 100%)" }}>
+
+              {/* Profil + actions */}
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-sbbs-gold flex items-center justify-center text-white font-bold text-sm shrink-0">
+                  {profile?.prenom?.[0]}{profile?.nom?.[0]}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-800 text-sm truncate">{contact.prenom} {contact.nom}</p>
-                  <p className="text-xs text-gray-400 truncate mt-0.5">{contact.branche}</p>
-                  {contact.type === "directeur" && (
-                    <span className="text-xs text-purple-600 font-semibold">Directeur</span>
+                  <p className="font-bold text-white text-sm truncate">{profile?.prenom} {profile?.nom}</p>
+                  <p className="text-xs text-blue-200 capitalize">{role}</p>
+                </div>
+              </div>
+
+              {/* Icônes d'action */}
+              <div className="flex gap-2">
+                {/* Nouvelle conversation */}
+                <button
+                  onClick={() => { setActiveContact(null); setSearchQuery(""); setSidebarView("contacts"); }}
+                  className="flex-1 flex flex-col items-center gap-1 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition"
+                  title="Conversations"
+                >
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  <span className="text-xs text-white/80">Discussions</span>
+                </button>
+
+                {/* Recherche */}
+                <button
+                  onClick={() => { setShowSearch(s => !s); setSidebarView("contacts"); }}
+                  className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-xl transition ${showSearch ? "bg-white/30" : "bg-white/10 hover:bg-white/20"}`}
+                  title="Rechercher"
+                >
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <span className="text-xs text-white/80">Recherche</span>
+                </button>
+
+                {/* Paramètres */}
+                <button
+                  onClick={() => setSidebarView(v => v === "settings" ? "contacts" : "settings")}
+                  className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-xl transition ${sidebarView === "settings" ? "bg-white/30" : "bg-white/10 hover:bg-white/20"}`}
+                  title="Paramètres"
+                >
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span className="text-xs text-white/80">Paramètres</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Barre de recherche */}
+            {showSearch && sidebarView === "contacts" && (
+              <div className="px-3 py-2 bg-gray-50 border-b border-gray-200 shrink-0">
+                <div className="flex items-center gap-2 bg-white rounded-xl px-3 py-2 border border-gray-200">
+                  <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input
+                    ref={searchRef}
+                    type="text"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    placeholder="Rechercher un contact..."
+                    className="flex-1 text-sm focus:outline-none bg-transparent"
+                  />
+                  {searchQuery && (
+                    <button onClick={() => setSearchQuery("")} className="text-gray-400 hover:text-gray-600">✕</button>
                   )}
                 </div>
-                {contact.unread > 0 && (
-                  <div className="flex flex-col items-end gap-1 shrink-0">
-                    <span className="bg-sbbs-red text-white text-xs font-bold min-w-[20px] h-5 rounded-full flex items-center justify-center px-1">
-                      {contact.unread}
-                    </span>
+              </div>
+            )}
+
+            {/* ─── VUE CONTACTS ─── */}
+            {sidebarView === "contacts" && (
+              <div className="flex-1 overflow-y-auto">
+                <div className="px-4 py-2 bg-gray-50 border-b border-gray-100">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">
+                    {searchQuery ? `${filteredContacts.length} résultat(s)` : `${contacts.length} contact(s)`}
+                  </p>
+                </div>
+                {filteredContacts.length === 0 ? (
+                  <div className="p-8 text-center text-gray-400">
+                    <p className="text-4xl mb-2">🔍</p>
+                    <p className="text-sm">{searchQuery ? "Aucun résultat" : "Aucun contact"}</p>
                   </div>
-                )}
-              </button>
-            ))}
+                ) : filteredContacts.map(contact => (
+                  <button key={contact.id}
+                    onClick={() => { setActiveContact(contact); if (role === "directeur") setActiveConv("ambassadeur_conv"); }}
+                    className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition border-b border-gray-100 ${
+                      activeContact?.id === contact.id ? "bg-blue-50 border-l-4 border-l-sbbs-blue" : "hover:bg-gray-50"
+                    }`}>
+                    <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm"
+                      style={{ background: contact.type === "directeur" ? "linear-gradient(135deg, #7C3AED, #A855F7)" : "linear-gradient(135deg, #1A3A6C, #2563EB)" }}>
+                      {contact.prenom?.[0]}{contact.nom?.[0]}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-800 text-sm truncate">{contact.prenom} {contact.nom}</p>
+                      <p className="text-xs text-gray-400 truncate mt-0.5">{contact.branche}</p>
+                      {contact.type === "directeur" && (
+                        <span className="text-xs text-purple-600 font-semibold">Directeur</span>
+                      )}
+                    </div>
+                    {contact.unread > 0 && (
+                      <span className="bg-sbbs-red text-white text-xs font-bold min-w-[20px] h-5 rounded-full flex items-center justify-center px-1 shrink-0">
+                        {contact.unread}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* ─── VUE PARAMÈTRES ─── */}
+            {sidebarView === "settings" && (
+              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Paramètres du chat</p>
+
+                <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-700">Notifications</p>
+                      <p className="text-xs text-gray-400">Nouveaux messages</p>
+                    </div>
+                    <div className="w-10 h-6 bg-sbbs-blue rounded-full flex items-center justify-end px-1">
+                      <div className="w-4 h-4 bg-white rounded-full" />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-700">Accusés de réception</p>
+                      <p className="text-xs text-gray-400">Afficher les ✓✓</p>
+                    </div>
+                    <div className="w-10 h-6 bg-sbbs-blue rounded-full flex items-center justify-end px-1">
+                      <div className="w-4 h-4 bg-white rounded-full" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-sm font-semibold text-gray-700 mb-1">Mon profil</p>
+                  <p className="text-xs text-gray-400">{profile?.prenom} {profile?.nom}</p>
+                  <p className="text-xs text-gray-400 capitalize">{role}</p>
+                  {profile?.branche && <p className="text-xs text-sbbs-blue mt-1">{profile.branche}</p>}
+                </div>
+
+                <button
+                  onClick={() => router.push("/parametres")}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-sbbs-blue text-white text-sm font-semibold hover:bg-blue-800 transition"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  </svg>
+                  Aller aux Paramètres
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -426,7 +565,7 @@ export default function ChatPage() {
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1" style={{ background: "#E5DDD5" }}>
               {messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-gray-500 py-16">
+                <div className="flex flex-col items-center justify-center h-full">
                   <div className="bg-white rounded-2xl px-8 py-8 text-center shadow-sm">
                     <p className="text-5xl mb-3">💬</p>
                     <p className="font-semibold text-gray-700">Aucun message</p>
@@ -441,25 +580,15 @@ export default function ChatPage() {
                 return (
                   <div key={msg.id} className={`flex ${mine ? "justify-end" : "justify-start"} ${i > 0 && messages[i-1]?.expediteur_id === msg.expediteur_id ? "mt-0.5" : "mt-3"}`}>
                     <div className={`max-w-[70%] flex flex-col ${mine ? "items-end" : "items-start"}`}>
-                      {showName && (
-                        <p className="text-xs font-semibold mb-1 px-1" style={{ color: "#1A3A6C" }}>{msg.expediteur_nom}</p>
-                      )}
-                      <div className={`relative px-3 py-2 rounded-2xl shadow-sm text-sm leading-relaxed break-words ${
-                        mine ? "rounded-tr-sm" : "rounded-tl-sm"
-                      }`}
-                        style={mine
-                          ? { background: "#1A3A6C", color: "white" }
-                          : { background: "white", color: "#1a1a1a" }
-                        }>
-                        {/* Fichier image */}
+                      {showName && <p className="text-xs font-semibold mb-1 px-1" style={{ color: "#1A3A6C" }}>{msg.expediteur_nom}</p>}
+                      <div className={`relative px-3 py-2 rounded-2xl shadow-sm text-sm leading-relaxed break-words ${mine ? "rounded-tr-sm" : "rounded-tl-sm"}`}
+                        style={mine ? { background: "#1A3A6C", color: "white" } : { background: "white", color: "#1a1a1a" }}>
                         {msg.fichier_url && msg.fichier_type === "photo" && (
                           <img src={msg.fichier_url} alt={msg.fichier_nom} className="rounded-xl mb-2 max-w-full" style={{ maxHeight: "200px", objectFit: "cover" }} />
                         )}
-                        {/* Fichier vidéo */}
                         {msg.fichier_url && msg.fichier_type === "video" && (
                           <video src={msg.fichier_url} controls className="rounded-xl mb-2 max-w-full" style={{ maxHeight: "200px" }} />
                         )}
-                        {/* Fichier document */}
                         {msg.fichier_url && msg.fichier_type === "fichier" && (
                           <a href={msg.fichier_url} target="_blank" rel="noopener noreferrer"
                             className="flex items-center gap-2 mb-2 bg-black/10 rounded-xl px-3 py-2">
@@ -467,14 +596,11 @@ export default function ChatPage() {
                             <span className="text-xs font-medium truncate">{msg.fichier_nom}</span>
                           </a>
                         )}
-                        {msg.contenu && (!msg.fichier_url || msg.fichier_type === "fichier") && (
-                          <span>{msg.contenu}</span>
-                        )}
+                        {msg.contenu && (!msg.fichier_url || msg.fichier_type === "fichier") && <span>{msg.contenu}</span>}
                       </div>
                       {showTime && (
                         <p className="text-xs mt-1 px-1" style={{ color: "#667781" }}>
-                          {formatTime(msg.created_at)}
-                          {mine && <span className="ml-1">{msg.lu ? " ✓✓" : " ✓"}</span>}
+                          {formatTime(msg.created_at)}{mine && <span className="ml-1">{msg.lu ? " ✓✓" : " ✓"}</span>}
                         </p>
                       )}
                     </div>
@@ -487,38 +613,29 @@ export default function ChatPage() {
             {/* Input */}
             {canSend() && (
               <div className="shrink-0 px-3 py-3 bg-gray-100 border-t border-gray-200">
-                {/* Actions fichiers */}
                 <div className="flex gap-2 mb-2">
                   <button onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 transition shadow-sm"
-                    title="Joindre un fichier">
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 transition shadow-sm">
                     📎 <span className="hidden sm:inline">Fichier</span>
                   </button>
                   <button onClick={() => cameraInputRef.current?.click()}
-                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 transition shadow-sm"
-                    title="Prendre une photo">
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 transition shadow-sm">
                     📷 <span className="hidden sm:inline">Photo</span>
                   </button>
                   <button onClick={() => videoInputRef.current?.click()}
-                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 transition shadow-sm"
-                    title="Enregistrer une vidéo">
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 transition shadow-sm">
                     🎥 <span className="hidden sm:inline">Vidéo</span>
                   </button>
                   {uploadingFile && <span className="text-xs text-sbbs-blue animate-pulse self-center">Envoi...</span>}
                 </div>
 
-                {/* Inputs cachés */}
-                <input ref={fileInputRef} type="file" className="hidden"
-                  accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
+                <input ref={fileInputRef} type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
                   onChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(f, "fichier"); e.target.value = ""; }} />
-                <input ref={cameraInputRef} type="file" className="hidden"
-                  accept="image/*" capture="environment"
+                <input ref={cameraInputRef} type="file" className="hidden" accept="image/*" capture="environment"
                   onChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(f, "photo"); e.target.value = ""; }} />
-                <input ref={videoInputRef} type="file" className="hidden"
-                  accept="video/*" capture="environment"
+                <input ref={videoInputRef} type="file" className="hidden" accept="video/*" capture="environment"
                   onChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(f, "video"); e.target.value = ""; }} />
 
-                {/* Zone texte + envoyer */}
                 <div className="flex gap-2 items-end">
                   <textarea value={newMessage}
                     onChange={e => setNewMessage(e.target.value)}
@@ -531,9 +648,7 @@ export default function ChatPage() {
                   <button onClick={handleSend} disabled={!newMessage.trim() || sending}
                     className="w-11 h-11 rounded-full flex items-center justify-center transition disabled:opacity-40 shrink-0 shadow-md"
                     style={{ background: "linear-gradient(135deg, #1A3A6C, #2563EB)" }}>
-                    {sending ? (
-                      <span className="text-white text-xs animate-pulse">...</span>
-                    ) : (
+                    {sending ? <span className="text-white text-xs animate-pulse">...</span> : (
                       <svg className="w-5 h-5 text-white rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                       </svg>
@@ -545,13 +660,13 @@ export default function ChatPage() {
           </div>
         )}
 
-        {/* Admin sans contact sélectionné */}
+        {/* Admin sans contact */}
         {role === "admin" && !activeContact && (
           <div className="flex-1 flex flex-col items-center justify-center" style={{ background: "#E5DDD5" }}>
             <div className="bg-white rounded-2xl px-10 py-10 text-center shadow-sm">
               <p className="text-5xl mb-3">💬</p>
               <p className="font-semibold text-gray-700">Sélectionnez un contact</p>
-              <p className="text-sm text-gray-400 mt-1">Choisissez dans la liste à gauche</p>
+              <p className="text-sm text-gray-400 mt-1">Choisissez dans le panneau à gauche</p>
             </div>
           </div>
         )}
