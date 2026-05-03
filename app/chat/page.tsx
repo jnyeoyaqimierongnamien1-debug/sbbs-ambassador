@@ -422,7 +422,7 @@ export default function ChatPage() {
         </div>
       )}
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden max-w-5xl mx-auto w-full">
 
         {/* ─── LISTE CONTACTS (directeur ambassadeurs / admin) ─── */}
         {((role === "directeur" && activeConv === "ambassadeurs") || role === "admin") && (
@@ -504,7 +504,7 @@ export default function ChatPage() {
 
             {/* Input */}
             {canSend() && (
-              <div className="shrink-0 bg-white border-t border-gray-200 px-4 py-3">
+              <div className="shrink-0 bg-white border-t border-gray-200 px-6 py-4 max-w-2xl mx-auto w-full">
                 <div className="flex gap-2 items-end">
                   <textarea
                     value={newMessage}
