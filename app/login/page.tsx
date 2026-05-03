@@ -5,14 +5,14 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const [showSplash, setShowSplash]           = useState(true);
-  const [email, setEmail]                     = useState("");
-  const [password, setPassword]               = useState("");
-  const [error, setError]                     = useState("");
-  const [loading, setLoading]                 = useState(false);
-  const [installPrompt, setInstallPrompt]     = useState<any>(null);
-  const [isInstalled, setIsInstalled]         = useState(false);
-  const [installing, setInstalling]           = useState(false);
+  const [showSplash, setShowSplash]       = useState(true);
+  const [email, setEmail]                 = useState("");
+  const [password, setPassword]           = useState("");
+  const [error, setError]                 = useState("");
+  const [loading, setLoading]             = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [isInstalled, setIsInstalled]     = useState(false);
+  const [installing, setInstalling]       = useState(false);
 
   const router   = useRouter();
   const supabase = createClient();
@@ -22,19 +22,12 @@ export default function LoginPage() {
     return () => clearTimeout(timer);
   }, []);
 
-  // ─── Détection PWA installable ───
   useEffect(() => {
-    // Déjà installé ?
     if (window.matchMedia("(display-mode: standalone)").matches) {
       setIsInstalled(true);
       return;
     }
-
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setInstallPrompt(e);
-    };
-
+    const handler = (e: Event) => { e.preventDefault(); setInstallPrompt(e); };
     window.addEventListener("beforeinstallprompt", handler as EventListener);
     return () => window.removeEventListener("beforeinstallprompt", handler as EventListener);
   }, []);
@@ -44,53 +37,28 @@ export default function LoginPage() {
     setInstalling(true);
     installPrompt.prompt();
     const { outcome } = await installPrompt.userChoice;
-    if (outcome === "accepted") {
-      setIsInstalled(true);
-      setInstallPrompt(null);
-    }
+    if (outcome === "accepted") { setIsInstalled(true); setInstallPrompt(null); }
     setInstalling(false);
   };
 
   const handleLogin = async () => {
     setLoading(true);
     setError("");
-
     const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (authError) {
-      setError("Email ou mot de passe incorrect.");
-      setLoading(false);
-      return;
-    }
+    if (authError) { setError("Email ou mot de passe incorrect."); setLoading(false); return; }
 
     const { data: { user } } = await supabase.auth.getUser();
 
-    const { data: directeur } = await supabase
-      .from("directeurs").select("id, statut").eq("user_id", user?.id).single();
-
+    const { data: directeur } = await supabase.from("directeurs").select("id, statut").eq("user_id", user?.id).single();
     if (directeur) {
-      if (directeur.statut === "En attente") {
-        await supabase.auth.signOut();
-        setError("PENDING");
-        setLoading(false);
-        return;
-      }
-      router.push("/directeur");
-      return;
+      if (directeur.statut === "En attente") { await supabase.auth.signOut(); setError("PENDING"); setLoading(false); return; }
+      router.push("/directeur"); return;
     }
 
-    const { data: ambassadeur } = await supabase
-      .from("ambassadeurs").select("id, statut").eq("user_id", user?.id).single();
-
+    const { data: ambassadeur } = await supabase.from("ambassadeurs").select("id, statut").eq("user_id", user?.id).single();
     if (ambassadeur) {
-      if (ambassadeur.statut === "En attente") {
-        await supabase.auth.signOut();
-        setError("PENDING");
-        setLoading(false);
-        return;
-      }
-      router.push("/espace");
-      return;
+      if (ambassadeur.statut === "En attente") { await supabase.auth.signOut(); setError("PENDING"); setLoading(false); return; }
+      router.push("/espace"); return;
     }
 
     router.push("/dashboard");
@@ -129,42 +97,40 @@ export default function LoginPage() {
 
       <div className="relative z-10 w-full max-w-md mx-4">
 
-        {/* ─── BOUTON INSTALLATION PWA ─── */}
+        {/* ─── BOUTON PWA compact à droite ─── */}
         {!isInstalled && installPrompt && (
-          <div className="mb-4">
+          <div className="mb-4 flex justify-end">
             <button
               onClick={handleInstall}
               disabled={installing}
-              className="w-full flex items-center justify-center gap-3 py-3.5 px-5 rounded-2xl font-bold text-sm shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95"
+              className="flex items-center gap-2 py-2 px-3.5 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95"
               style={{
-                background: "linear-gradient(135deg, #4B0082 0%, #7B2FBE 40%, #C9A84C 100%)",
-                boxShadow: "0 8px 32px rgba(75,0,130,0.5), 0 2px 8px rgba(201,168,76,0.3)",
+                background: "linear-gradient(135deg, #4B0082 0%, #7B2FBE 50%, #C9A84C 100%)",
+                boxShadow: "0 6px 20px rgba(75,0,130,0.45), 0 2px 6px rgba(201,168,76,0.3)",
                 color: "white",
-                border: "1px solid rgba(201,168,76,0.4)",
+                border: "1px solid rgba(201,168,76,0.35)",
               }}
             >
               {installing ? (
                 <>
-                  <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                  <span>Installation en cours...</span>
+                  <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                  <span className="text-xs font-semibold">Installation...</span>
                 </>
               ) : (
                 <>
-                  {/* Icône téléchargement */}
-                  <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
+                    <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
                         d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
                   </div>
-                  <div className="text-left flex-1">
-                    <p className="font-bold leading-none">Installer SBBS Ambassador</p>
-                    <p className="text-xs text-white/70 mt-0.5">Accès rapide depuis votre écran d'accueil</p>
+                  <div className="text-left">
+                    <p className="font-bold leading-none" style={{ fontSize: "11px" }}>Installer l'app</p>
+                    <p className="text-white/65 leading-none mt-0.5" style={{ fontSize: "9px" }}>Écran d'accueil</p>
                   </div>
-                  {/* Badge étoile royale */}
-                  <div className="shrink-0 flex items-center gap-1 bg-white/20 px-2 py-1 rounded-lg">
-                    <span className="text-sbbs-gold text-xs">★</span>
-                    <span className="text-white text-xs font-bold">APP</span>
+                  <div className="flex items-center gap-0.5 bg-white/15 px-1.5 py-0.5 rounded-md">
+                    <span style={{ fontSize: "9px", color: "#C9A84C" }}>★</span>
+                    <span className="text-white font-bold" style={{ fontSize: "9px" }}>APP</span>
                   </div>
                 </>
               )}
@@ -172,11 +138,13 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Badge "Déjà installé" */}
+        {/* Badge déjà installé */}
         {isInstalled && (
-          <div className="mb-4 flex items-center justify-center gap-2 bg-green-500/20 border border-green-400/30 rounded-2xl py-2.5 px-4">
-            <span className="text-green-400 text-lg">✓</span>
-            <span className="text-green-300 text-sm font-semibold">Application installée sur votre appareil</span>
+          <div className="mb-4 flex justify-end">
+            <div className="flex items-center gap-1.5 bg-green-500/20 border border-green-400/30 rounded-xl py-1.5 px-3">
+              <span className="text-green-400 text-sm">✓</span>
+              <span className="text-green-300 font-semibold" style={{ fontSize: "11px" }}>App installée</span>
+            </div>
           </div>
         )}
 
