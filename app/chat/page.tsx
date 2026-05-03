@@ -354,7 +354,7 @@ export default function ChatPage() {
       {role === "ambassadeur" && (
         <div className="flex shrink-0 bg-white border-b border-gray-200 shadow-sm">
           {[
-            { id: "direction", label: "Direction", emoji: "🏢", unread: unreadDirection },
+            { id: "direction", label: "Administration", emoji: "🏛️", unread: unreadDirection },
             { id: "directeur", label: "Mon Directeur", emoji: "👔", unread: unreadDirecteur },
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveConv(tab.id)}
@@ -375,7 +375,7 @@ export default function ChatPage() {
             className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold transition border-b-2 ${
               activeConv === "direction" ? "border-sbbs-blue text-sbbs-blue bg-blue-50" : "border-transparent text-gray-500"
             }`}>
-            🏢 Direction
+            🏛️ Administration
           </button>
           <button onClick={() => { setActiveConv("ambassadeurs"); setSidebarOpen(true); }}
             className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold transition border-b-2 ${
@@ -563,7 +563,7 @@ export default function ChatPage() {
           <div className="flex-1 flex flex-col overflow-hidden">
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1" style={{ background: "#E5DDD5" }}>
+            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1 max-w-3xl mx-auto w-full" style={{ background: "#E5DDD5" }}>
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full">
                   <div className="bg-white rounded-2xl px-8 py-8 text-center shadow-sm">
