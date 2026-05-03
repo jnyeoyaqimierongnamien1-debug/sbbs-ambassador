@@ -76,6 +76,8 @@ export default function RootLayout({
         />
         {children}
         <ChatFAB />
+        import AssistantFAB from "@/components/AssistantFAB";
+<AssistantFAB />
       </body>
     </html>
   );
