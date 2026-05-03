@@ -103,7 +103,7 @@ export default function LoginPage() {
             <button
               onClick={handleInstall}
               disabled={installing}
-              className="flex items-center gap-2 py-2 px-3.5 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95"
+              className="flex items-center gap-2 py-2.5 px-4 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95"
               style={{
                 background: "linear-gradient(135deg, #4B0082 0%, #7B2FBE 50%, #C9A84C 100%)",
                 boxShadow: "0 6px 20px rgba(75,0,130,0.45), 0 2px 6px rgba(201,168,76,0.3)",
@@ -125,8 +125,8 @@ export default function LoginPage() {
                     </svg>
                   </div>
                   <div className="text-left">
-                    <p className="font-bold leading-none" style={{ fontSize: "11px" }}>Installer l'app</p>
-                    <p className="text-white/65 leading-none mt-0.5" style={{ fontSize: "9px" }}>Écran d'accueil</p>
+                    <p className="font-bold leading-none" style={{ fontSize: "12px" }}>Installer l'app</p>
+                    <p className="text-white/65 leading-none mt-0.5" style={{ fontSize: "10px" }}>Écran d'accueil</p>
                   </div>
                   <div className="flex items-center gap-0.5 bg-white/15 px-1.5 py-0.5 rounded-md">
                     <span style={{ fontSize: "9px", color: "#C9A84C" }}>★</span>
