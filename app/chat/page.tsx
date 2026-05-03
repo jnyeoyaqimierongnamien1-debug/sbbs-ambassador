@@ -560,7 +560,7 @@ export default function ChatPage() {
 
         {/* ─── ZONE MESSAGES ─── */}
         {(role === "ambassadeur" || (role === "directeur" && activeConv === "direction") || (role === "directeur" && activeContact) || (role === "admin" && activeContact)) && (
-          <div className="flex-1 flex flex-col overflow-hidden">
+  <div className="flex-1 flex flex-col overflow-hidden max-w-3xl mx-auto w-full">
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1 max-w-3xl mx-auto w-full" style={{ background: "#E5DDD5" }}>
