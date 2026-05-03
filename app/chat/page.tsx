@@ -43,11 +43,9 @@ export default function ChatPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
-  const [unreadDirection, setUnreadDirection] = useState(0);
+  const [unreadAdmin, setUnreadAdmin] = useState(0);
   const [unreadDirecteur, setUnreadDirecteur] = useState(0);
   const [uploadingFile, setUploadingFile] = useState(false);
-
-  // Sidebar
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
@@ -64,21 +62,20 @@ export default function ChatPage() {
   useEffect(() => { fetchProfile(); }, []);
 
   useEffect(() => {
-    if (profile) {
-      if (role === "directeur" || role === "admin") fetchContacts();
-      fetchMessages();
-      markAsRead();
+    if (!profile) return;
+    if (role === "directeur" || role === "admin") fetchContacts();
+    fetchMessages();
+    markAsRead();
 
-      const channel = supabase
-        .channel("chat-realtime-v4")
-        .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
-          fetchMessages();
-          if (role === "directeur" || role === "admin") fetchContacts();
-        })
-        .subscribe();
+    const channel = supabase
+      .channel("chat-v5")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
+        fetchMessages();
+        if (role === "directeur" || role === "admin") fetchContacts();
+      })
+      .subscribe();
 
-      return () => { supabase.removeChannel(channel); };
-    }
+    return () => { supabase.removeChannel(channel); };
   }, [profile, activeConv, activeContact]);
 
   useEffect(() => {
@@ -108,7 +105,6 @@ export default function ChatPage() {
       setRole("ambassadeur");
       setProfile({ ...amb, user_id: user.id });
       setActiveConv("direction");
-      setSidebarOpen(false);
       setLoading(false);
       return;
     }
@@ -126,7 +122,7 @@ export default function ChatPage() {
         .from("ambassadeurs").select("id, user_id, nom, prenom, branche")
         .eq("branche", profile.branche).order("nom");
 
-      const contactsWithUnread: Contact[] = await Promise.all(
+      const list: Contact[] = await Promise.all(
         (ambs || []).map(async (amb) => {
           const { count } = await supabase.from("messages")
             .select("*", { count: "exact", head: true })
@@ -135,14 +131,14 @@ export default function ChatPage() {
           return { ...amb, type: "ambassadeur" as const, unread: count || 0 };
         })
       );
-      setContacts(contactsWithUnread);
+      setContacts(list);
     }
 
     if (role === "admin") {
       const { data: ambs } = await supabase.from("ambassadeurs").select("id, user_id, nom, prenom, branche").order("nom");
       const { data: dirs } = await supabase.from("directeurs").select("id, user_id, nom, prenom, branche").order("nom");
 
-      const ambContacts: Contact[] = await Promise.all(
+      const ambList: Contact[] = await Promise.all(
         (ambs || []).map(async (amb) => {
           const { count } = await supabase.from("messages")
             .select("*", { count: "exact", head: true })
@@ -151,7 +147,7 @@ export default function ChatPage() {
         })
       );
 
-      const dirContacts: Contact[] = await Promise.all(
+      const dirList: Contact[] = await Promise.all(
         (dirs || []).map(async (dir) => {
           const { count } = await supabase.from("messages")
             .select("*", { count: "exact", head: true })
@@ -160,7 +156,7 @@ export default function ChatPage() {
         })
       );
 
-      setContacts([...ambContacts, ...dirContacts]);
+      setContacts([...ambList, ...dirList]);
     }
   }, [profile, role]);
 
@@ -174,17 +170,17 @@ export default function ChatPage() {
         .order("created_at", { ascending: true });
       data = msgs || [];
 
-      const { count: cd } = await supabase.from("messages")
+      const { count: ca } = await supabase.from("messages")
         .select("*", { count: "exact", head: true })
         .eq("destinataire_type", "direction").eq("ambassadeur_id", profile.id)
         .eq("lu", false).neq("expediteur_id", profile.user_id);
-      setUnreadDirection(cd || 0);
+      setUnreadAdmin(ca || 0);
 
-      const { count: cdir } = await supabase.from("messages")
+      const { count: cd } = await supabase.from("messages")
         .select("*", { count: "exact", head: true })
         .eq("destinataire_type", "directeur").eq("ambassadeur_id", profile.id)
         .eq("lu", false).neq("expediteur_id", profile.user_id);
-      setUnreadDirecteur(cdir || 0);
+      setUnreadDirecteur(cd || 0);
 
     } else if (role === "directeur") {
       if (activeConv === "direction") {
@@ -233,7 +229,7 @@ export default function ChatPage() {
 
   const buildPayload = (extra: any = {}) => {
     const expediteurNom = role === "admin" ? "Direction SBBS" : `${profile.prenom} ${profile.nom}`;
-    let payload: any = { expediteur_id: profile.user_id, expediteur_nom: expediteurNom, expediteur_role: role, lu: false, ...extra };
+    const payload: any = { expediteur_id: profile.user_id, expediteur_nom: expediteurNom, expediteur_role: role, lu: false, ...extra };
 
     if (role === "ambassadeur") {
       payload.destinataire_type = activeConv;
@@ -254,7 +250,6 @@ export default function ChatPage() {
       if (activeContact.type === "ambassadeur") payload.ambassadeur_id = activeContact.id;
       else payload.directeur_id = activeContact.id;
     }
-
     return payload;
   };
 
@@ -283,12 +278,14 @@ export default function ChatPage() {
   const formatTime = (iso: string) => {
     const date = new Date(iso);
     const now = new Date();
-    const isToday = date.toDateString() === now.toDateString();
-    if (isToday) return date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-    return date.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" }) + " " + date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    if (date.toDateString() === now.toDateString())
+      return date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    return date.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" }) + " " +
+      date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
   };
 
   const isMe = (msg: Message) => msg.expediteur_id === profile?.user_id;
+
   const canSend = () => {
     if (role === "ambassadeur") return true;
     if (role === "directeur") return activeConv === "direction" || !!activeContact;
@@ -297,9 +294,12 @@ export default function ChatPage() {
   };
 
   const getConvTitle = () => {
-    if (role === "ambassadeur") return activeConv === "direction" ? "Direction Commerciale & Marketing" : `Mon Directeur · ${profile?.branche}`;
-    if (role === "directeur") return activeConv === "direction" ? "Direction Commerciale & Marketing" : activeContact ? `${activeContact.prenom} ${activeContact.nom}` : "Messages";
-    if (role === "admin" && activeContact) return `${activeContact.prenom} ${activeContact.nom}`;
+    if (role === "ambassadeur")
+      return activeConv === "direction" ? "Administration SBBS" : `Mon Directeur · ${profile?.branche}`;
+    if (role === "directeur")
+      return activeConv === "direction" ? "Administration SBBS" : activeContact ? `${activeContact.prenom} ${activeContact.nom}` : "Messages";
+    if (role === "admin" && activeContact)
+      return `${activeContact.prenom} ${activeContact.nom}`;
     return "Messages";
   };
 
@@ -307,7 +307,13 @@ export default function ChatPage() {
   const filteredContacts = contacts.filter(c =>
     `${c.prenom} ${c.nom} ${c.branche}`.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  const showSidebar = (role === "directeur" && activeConv === "ambassadeurs") || role === "admin";
+
+  // Sidebar visible uniquement pour admin et directeur (onglet ambassadeurs)
+  const hasSidebar = (role === "directeur" && activeConv === "ambassadeurs") || role === "admin";
+  const showMessages = role === "ambassadeur"
+    || (role === "directeur" && activeConv === "direction")
+    || (role === "directeur" && !!activeContact)
+    || (role === "admin" && !!activeContact);
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -320,28 +326,27 @@ export default function ChatPage() {
 
       {/* ─── HEADER ─── */}
       <header className="bg-sbbs-blue text-white px-4 py-3 flex items-center gap-3 shadow-lg shrink-0">
-        <button onClick={() => router.back()} className="text-blue-200 hover:text-white text-sm transition shrink-0">← Retour</button>
+        <button onClick={() => router.back()} className="text-blue-200 hover:text-white text-sm transition shrink-0">
+          ← Retour
+        </button>
         <img src="/LOGO%20SBBS%20PNG.webp" alt="SBBS" className="w-9 h-9 rounded-full border-2 border-sbbs-gold shrink-0" />
         <div className="flex-1 min-w-0">
           <h1 className="font-bold text-sm leading-none truncate">{getConvTitle()}</h1>
           <p className="text-xs text-blue-200 mt-0.5 capitalize">{role}</p>
         </div>
-        {/* Toggle sidebar — visible si admin ou directeur */}
-        {showSidebar && (
+        {/* Toggle sidebar — uniquement si sidebar disponible */}
+        {hasSidebar && (
           <button
             onClick={() => setSidebarOpen(o => !o)}
             className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/10 hover:bg-white/20 transition shrink-0"
             title={sidebarOpen ? "Fermer le panneau" : "Ouvrir le panneau"}
           >
-            {sidebarOpen ? (
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7M19 19l-7-7 7-7" />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-              </svg>
-            )}
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {sidebarOpen
+                ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7M19 19l-7-7 7-7" />
+                : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+              }
+            </svg>
           </button>
         )}
         <div className="flex items-center gap-1.5 bg-green-500/20 border border-green-400/40 px-2.5 py-1 rounded-full shrink-0">
@@ -350,53 +355,63 @@ export default function ChatPage() {
         </div>
       </header>
 
-      {/* Onglets ambassadeur */}
+      {/* ─── ONGLETS AMBASSADEUR ─── */}
       {role === "ambassadeur" && (
         <div className="flex shrink-0 bg-white border-b border-gray-200 shadow-sm">
           {[
-            { id: "direction", label: "Administration", emoji: "🏛️", unread: unreadDirection },
+            { id: "direction", label: "Administration", emoji: "🏛️", unread: unreadAdmin },
             { id: "directeur", label: "Mon Directeur", emoji: "👔", unread: unreadDirecteur },
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveConv(tab.id)}
               className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold transition border-b-2 ${
                 activeConv === tab.id ? "border-sbbs-blue text-sbbs-blue bg-blue-50" : "border-transparent text-gray-500 hover:text-gray-700"
               }`}>
-              <span>{tab.emoji}</span><span>{tab.label}</span>
-              {tab.unread > 0 && <span className="bg-sbbs-red text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">{tab.unread}</span>}
+              <span>{tab.emoji}</span>
+              <span>{tab.label}</span>
+              {tab.unread > 0 && (
+                <span className="bg-sbbs-red text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                  {tab.unread}
+                </span>
+              )}
             </button>
           ))}
         </div>
       )}
 
-      {/* Onglets directeur */}
+      {/* ─── ONGLETS DIRECTEUR ─── */}
       {role === "directeur" && (
         <div className="flex shrink-0 bg-white border-b border-gray-200 shadow-sm">
-          <button onClick={() => { setActiveConv("direction"); setActiveContact(null); }}
+          <button
+            onClick={() => { setActiveConv("direction"); setActiveContact(null); }}
             className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold transition border-b-2 ${
               activeConv === "direction" ? "border-sbbs-blue text-sbbs-blue bg-blue-50" : "border-transparent text-gray-500"
             }`}>
             🏛️ Administration
           </button>
-          <button onClick={() => { setActiveConv("ambassadeurs"); setSidebarOpen(true); }}
+          <button
+            onClick={() => { setActiveConv("ambassadeurs"); setSidebarOpen(true); }}
             className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold transition border-b-2 ${
               activeConv !== "direction" ? "border-sbbs-blue text-sbbs-blue bg-blue-50" : "border-transparent text-gray-500"
             }`}>
             👥 Ambassadeurs
-            {totalUnread > 0 && <span className="bg-sbbs-red text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">{totalUnread}</span>}
+            {totalUnread > 0 && (
+              <span className="bg-sbbs-red text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                {totalUnread}
+              </span>
+            )}
           </button>
         </div>
       )}
 
+      {/* ─── CORPS PRINCIPAL ─── */}
       <div className="flex flex-1 overflow-hidden">
 
-        {/* ─── SIDEBAR PREMIUM ─── */}
-        {showSidebar && sidebarOpen && (
-          <div className="w-72 shrink-0 flex flex-col bg-white border-r border-gray-200 shadow-md transition-all duration-300 overflow-hidden">
+        {/* ─── SIDEBAR (admin + directeur/ambassadeurs seulement) ─── */}
+        {hasSidebar && sidebarOpen && (
+          <div className="w-72 shrink-0 flex flex-col bg-white border-r border-gray-200 shadow-md overflow-hidden">
 
-            {/* En-tête sidebar avec dégradé */}
+            {/* En-tête sidebar dégradé SBBS */}
             <div className="shrink-0 px-4 py-3" style={{ background: "linear-gradient(135deg, #1A3A6C 0%, #2563EB 100%)" }}>
-
-              {/* Profil + actions */}
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-full bg-sbbs-gold flex items-center justify-center text-white font-bold text-sm shrink-0">
                   {profile?.prenom?.[0]}{profile?.nom?.[0]}
@@ -409,36 +424,27 @@ export default function ChatPage() {
 
               {/* Icônes d'action */}
               <div className="flex gap-2">
-                {/* Nouvelle conversation */}
                 <button
                   onClick={() => { setActiveContact(null); setSearchQuery(""); setSidebarView("contacts"); }}
-                  className="flex-1 flex flex-col items-center gap-1 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition"
-                  title="Conversations"
-                >
+                  className="flex-1 flex flex-col items-center gap-1 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition">
                   <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
                   <span className="text-xs text-white/80">Discussions</span>
                 </button>
 
-                {/* Recherche */}
                 <button
                   onClick={() => { setShowSearch(s => !s); setSidebarView("contacts"); }}
-                  className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-xl transition ${showSearch ? "bg-white/30" : "bg-white/10 hover:bg-white/20"}`}
-                  title="Rechercher"
-                >
+                  className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-xl transition ${showSearch ? "bg-white/30" : "bg-white/10 hover:bg-white/20"}`}>
                   <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                   <span className="text-xs text-white/80">Recherche</span>
                 </button>
 
-                {/* Paramètres */}
                 <button
                   onClick={() => setSidebarView(v => v === "settings" ? "contacts" : "settings")}
-                  className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-xl transition ${sidebarView === "settings" ? "bg-white/30" : "bg-white/10 hover:bg-white/20"}`}
-                  title="Paramètres"
-                >
+                  className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-xl transition ${sidebarView === "settings" ? "bg-white/30" : "bg-white/10 hover:bg-white/20"}`}>
                   <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -448,29 +454,25 @@ export default function ChatPage() {
               </div>
             </div>
 
-            {/* Barre de recherche */}
+            {/* Barre recherche */}
             {showSearch && sidebarView === "contacts" && (
               <div className="px-3 py-2 bg-gray-50 border-b border-gray-200 shrink-0">
                 <div className="flex items-center gap-2 bg-white rounded-xl px-3 py-2 border border-gray-200">
                   <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  <input
-                    ref={searchRef}
-                    type="text"
-                    value={searchQuery}
+                  <input ref={searchRef} type="text" value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     placeholder="Rechercher un contact..."
-                    className="flex-1 text-sm focus:outline-none bg-transparent"
-                  />
+                    className="flex-1 text-sm focus:outline-none bg-transparent" />
                   {searchQuery && (
-                    <button onClick={() => setSearchQuery("")} className="text-gray-400 hover:text-gray-600">✕</button>
+                    <button onClick={() => setSearchQuery("")} className="text-gray-400 hover:text-gray-600 text-xs">✕</button>
                   )}
                 </div>
               </div>
             )}
 
-            {/* ─── VUE CONTACTS ─── */}
+            {/* Liste contacts */}
             {sidebarView === "contacts" && (
               <div className="flex-1 overflow-y-auto">
                 <div className="px-4 py-2 bg-gray-50 border-b border-gray-100">
@@ -490,15 +492,13 @@ export default function ChatPage() {
                       activeContact?.id === contact.id ? "bg-blue-50 border-l-4 border-l-sbbs-blue" : "hover:bg-gray-50"
                     }`}>
                     <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm"
-                      style={{ background: contact.type === "directeur" ? "linear-gradient(135deg, #7C3AED, #A855F7)" : "linear-gradient(135deg, #1A3A6C, #2563EB)" }}>
+                      style={{ background: contact.type === "directeur" ? "linear-gradient(135deg,#7C3AED,#A855F7)" : "linear-gradient(135deg,#1A3A6C,#2563EB)" }}>
                       {contact.prenom?.[0]}{contact.nom?.[0]}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-gray-800 text-sm truncate">{contact.prenom} {contact.nom}</p>
                       <p className="text-xs text-gray-400 truncate mt-0.5">{contact.branche}</p>
-                      {contact.type === "directeur" && (
-                        <span className="text-xs text-purple-600 font-semibold">Directeur</span>
-                      )}
+                      {contact.type === "directeur" && <span className="text-xs text-purple-600 font-semibold">Directeur</span>}
                     </div>
                     {contact.unread > 0 && (
                       <span className="bg-sbbs-red text-white text-xs font-bold min-w-[20px] h-5 rounded-full flex items-center justify-center px-1 shrink-0">
@@ -510,11 +510,10 @@ export default function ChatPage() {
               </div>
             )}
 
-            {/* ─── VUE PARAMÈTRES ─── */}
+            {/* Paramètres sidebar */}
             {sidebarView === "settings" && (
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Paramètres du chat</p>
-
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Paramètres du chat</p>
                 <div className="bg-gray-50 rounded-xl p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
@@ -525,7 +524,6 @@ export default function ChatPage() {
                       <div className="w-4 h-4 bg-white rounded-full" />
                     </div>
                   </div>
-
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-semibold text-gray-700">Accusés de réception</p>
@@ -536,22 +534,15 @@ export default function ChatPage() {
                     </div>
                   </div>
                 </div>
-
                 <div className="bg-gray-50 rounded-xl p-4">
                   <p className="text-sm font-semibold text-gray-700 mb-1">Mon profil</p>
-                  <p className="text-xs text-gray-400">{profile?.prenom} {profile?.nom}</p>
+                  <p className="text-xs text-gray-500">{profile?.prenom} {profile?.nom}</p>
                   <p className="text-xs text-gray-400 capitalize">{role}</p>
                   {profile?.branche && <p className="text-xs text-sbbs-blue mt-1">{profile.branche}</p>}
                 </div>
-
-                <button
-                  onClick={() => router.push("/parametres")}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-sbbs-blue text-white text-sm font-semibold hover:bg-blue-800 transition"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  </svg>
-                  Aller aux Paramètres
+                <button onClick={() => router.push("/parametres")}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-sbbs-blue text-white text-sm font-semibold hover:bg-blue-800 transition">
+                  ⚙️ Aller aux Paramètres
                 </button>
               </div>
             )}
@@ -559,11 +550,11 @@ export default function ChatPage() {
         )}
 
         {/* ─── ZONE MESSAGES ─── */}
-        {(role === "ambassadeur" || (role === "directeur" && activeConv === "direction") || (role === "directeur" && activeContact) || (role === "admin" && activeContact)) && (
-  <div className="flex-1 flex flex-col overflow-hidden max-w-3xl mx-auto w-full">
+        {showMessages && (
+          <div className={`flex flex-col overflow-hidden ${hasSidebar ? "flex-1" : "w-full max-w-3xl mx-auto"}`}>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1 max-w-3xl mx-auto w-full" style={{ background: "#E5DDD5" }}>
+            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1" style={{ background: "#E5DDD5" }}>
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full">
                   <div className="bg-white rounded-2xl px-8 py-8 text-center shadow-sm">
@@ -574,14 +565,14 @@ export default function ChatPage() {
                 </div>
               ) : messages.map((msg, i) => {
                 const mine = isMe(msg);
-                const showName = !mine && (i === 0 || messages[i - 1]?.expediteur_id !== msg.expediteur_id);
-                const showTime = i === messages.length - 1 || messages[i + 1]?.expediteur_id !== msg.expediteur_id;
+                const showName = !mine && (i === 0 || messages[i-1]?.expediteur_id !== msg.expediteur_id);
+                const showTime = i === messages.length - 1 || messages[i+1]?.expediteur_id !== msg.expediteur_id;
 
                 return (
                   <div key={msg.id} className={`flex ${mine ? "justify-end" : "justify-start"} ${i > 0 && messages[i-1]?.expediteur_id === msg.expediteur_id ? "mt-0.5" : "mt-3"}`}>
                     <div className={`max-w-[70%] flex flex-col ${mine ? "items-end" : "items-start"}`}>
                       {showName && <p className="text-xs font-semibold mb-1 px-1" style={{ color: "#1A3A6C" }}>{msg.expediteur_nom}</p>}
-                      <div className={`relative px-3 py-2 rounded-2xl shadow-sm text-sm leading-relaxed break-words ${mine ? "rounded-tr-sm" : "rounded-tl-sm"}`}
+                      <div className={`px-3 py-2 rounded-2xl shadow-sm text-sm leading-relaxed break-words ${mine ? "rounded-tr-sm" : "rounded-tl-sm"}`}
                         style={mine ? { background: "#1A3A6C", color: "white" } : { background: "white", color: "#1a1a1a" }}>
                         {msg.fichier_url && msg.fichier_type === "photo" && (
                           <img src={msg.fichier_url} alt={msg.fichier_nom} className="rounded-xl mb-2 max-w-full" style={{ maxHeight: "200px", objectFit: "cover" }} />
@@ -610,7 +601,7 @@ export default function ChatPage() {
               <div ref={bottomRef} />
             </div>
 
-            {/* Input */}
+            {/* Zone saisie */}
             {canSend() && (
               <div className="shrink-0 px-3 py-3 bg-gray-100 border-t border-gray-200">
                 <div className="flex gap-2 mb-2">
@@ -647,7 +638,7 @@ export default function ChatPage() {
                   />
                   <button onClick={handleSend} disabled={!newMessage.trim() || sending}
                     className="w-11 h-11 rounded-full flex items-center justify-center transition disabled:opacity-40 shrink-0 shadow-md"
-                    style={{ background: "linear-gradient(135deg, #1A3A6C, #2563EB)" }}>
+                    style={{ background: "linear-gradient(135deg,#1A3A6C,#2563EB)" }}>
                     {sending ? <span className="text-white text-xs animate-pulse">...</span> : (
                       <svg className="w-5 h-5 text-white rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -660,13 +651,24 @@ export default function ChatPage() {
           </div>
         )}
 
-        {/* Admin sans contact */}
+        {/* Admin sans contact sélectionné */}
         {role === "admin" && !activeContact && (
           <div className="flex-1 flex flex-col items-center justify-center" style={{ background: "#E5DDD5" }}>
             <div className="bg-white rounded-2xl px-10 py-10 text-center shadow-sm">
               <p className="text-5xl mb-3">💬</p>
               <p className="font-semibold text-gray-700">Sélectionnez un contact</p>
               <p className="text-sm text-gray-400 mt-1">Choisissez dans le panneau à gauche</p>
+            </div>
+          </div>
+        )}
+
+        {/* Directeur onglet ambassadeurs sans contact */}
+        {role === "directeur" && activeConv === "ambassadeurs" && !activeContact && !sidebarOpen && (
+          <div className="flex-1 flex flex-col items-center justify-center" style={{ background: "#E5DDD5" }}>
+            <div className="bg-white rounded-2xl px-10 py-10 text-center shadow-sm">
+              <p className="text-5xl mb-3">👥</p>
+              <p className="font-semibold text-gray-700">Ouvrez le panneau</p>
+              <p className="text-sm text-gray-400 mt-1">Cliquez sur ≫ en haut à droite</p>
             </div>
           </div>
         )}
