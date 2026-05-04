@@ -54,7 +54,7 @@ const parrainageColors: Record<string, string> = {
 };
 
 const NAV_ITEMS = [
-  { title: "Investissement IP", description: "Groupe Intelligent Partnership", href: "/ip", icon: "💼", bg: "linear-gradient(135deg, #C9A84C, #92400E)" }
+  { title: "Investissement IP", description: "Groupe Intelligent Partnership", href: "/ip", icon: "💼", bg: "linear-gradient(135deg, #C9A84C, #92400E)" },
   { title: "Médiathèque", description: "Formations · Docs", href: "/dashboard/mediatheque", icon: "📁", bg: "linear-gradient(135deg, #0F766E 0%, #14B8A6 100%)" },
   { title: "Scripts WhatsApp", description: "10 messages", href: "/espace/scripts", icon: "📲", bg: "linear-gradient(135deg, #15803D 0%, #25D366 100%)" },
   { title: "Exports & Rapports", description: "Excel · CSV · PDF", href: "/espace/export", icon: "📄", bg: "linear-gradient(135deg, #991B1B 0%, #CC0000 100%)" },
@@ -218,7 +218,7 @@ export default function EspacePage() {
           </div>
         </div>
 
-        {/* ─── Navigation colorée compacte ─── */}
+        {/* Navigation colorée */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-6">
           {NAV_ITEMS.map(item => (
             <button
