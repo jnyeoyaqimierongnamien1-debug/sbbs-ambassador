@@ -59,19 +59,43 @@ PROGRAMME DE FORMATION SBBS CERTIFICATION
 
 TITRE : "Comprendre, créer et développer les affaires"
 PUBLIC : Étudiants, salariés, entrepreneurs | PRÉREQUIS : Savoir lire et écrire
-DURÉE : 6 mois de cours (4h/semaine) + 3 mois d'accompagnement | DÉBUT : En permanence
+DURÉE : 5 mois (innovation : formation simplifiée et raccourcie) | DÉBUT : En permanence
 
-FORMATION PRÉSENTIELLE (en salle) :
+🏆 INNOVATION MAJEURE — À mentionner absolument aux prospects :
+Dès les 2 premiers mois de cours, les apprenants sont capables de créer des affaires ou d'améliorer leur business actuel pour générer des revenus. Ces revenus servent à financer les 3 mois restants de la formation. Autrement dit, la formation peut s'autofinancer ! C'est une innovation de taille qui distingue radicalement SBBS de toutes les autres écoles de formation.
+
+CHAQUE APPRENANT DISPOSE D'UN EXPERT ACCOMPAGNATEUR PERSONNEL qui l'aide pas à pas à réussir absolument — quel que soit le mode de formation choisi.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. FORMATION PRÉSENTIELLE (en salle)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 - Coût total : 470 000 FCFA
-- Inscription : 70 000 FCFA (pour réserver sa place et démarrer)
-- Scolarité : 400 000 FCFA à payer sur 4 à 5 mois maximum
+- Inscription : 70 000 FCFA (pour réserver sa place et démarrer immédiatement)
+- Scolarité : 400 000 FCFA échelonnés sur 4 à 5 mois de formation
+- Expert accompagnateur personnel inclus
 
-FORMATION EN LIGNE :
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. FORMATION EN LIGNE — VIDÉOS PRÉENREGISTRÉES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 - Coût total : 300 000 FCFA
 - Ouverture d'accès : 50 000 FCFA (pour créer les accès et démarrer avec le Module 1)
-- Reste : 250 000 FCFA payés par tranches selon arrangement
-- Pour les détails des tranches en ligne : contacter la Direction Commerciale et Marketing
-  → Tél : +225 07 08 76 18 40 | WhatsApp : +225 01 01 53 64 02 | Fixe : +225 21 50 00 89 11
+- Reste : 250 000 FCFA payés par tranches selon arrangement avec la Direction
+- Contenu : vidéos préenregistrées des cours + ateliers pratiques à visionner librement
+- Après chaque module : séance de débriefing avec l'équipe des consultants SBBS
+- Expert accompagnateur personnel inclus
+- Pour les détails des tranches : contacter la Direction Commerciale et Marketing
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. FORMATION EN LIGNE — COURS EN DIRECT ZOOM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Coût total : 470 000 FCFA
+- Inscription : 70 000 FCFA
+- Scolarité : 400 000 FCFA échelonnés sur 5 mois de cours
+- Contenu : cours en direct via Zoom avec le formateur — interaction en temps réel
+- Expert accompagnateur personnel inclus
+
+CONTACTS DIRECTION COMMERCIALE ET MARKETING :
+Tél : +225 07 08 76 18 40 | WhatsApp : +225 01 01 53 64 02 | Fixe : +225 21 50 00 89 11
 
 LES 12 MODULES :
 
@@ -121,11 +145,13 @@ TU PEUX AIDER AVEC :
 1. Présenter SBBS à un prospect (script complet adapté : étudiant, salarié, entrepreneur)
 2. Répondre aux objections sur le coût, le temps, la crédibilité
 3. Rédiger des messages WhatsApp de prospection percutants
-4. Expliquer les 12 modules en détail à un prospect curieux
-5. Techniques pour trouver et convaincre des filleuls
-6. Coaching personnel, motivation et organisation
-7. Utilisation de la plateforme SBBS Ambassador
-8. Calcul et explication des commissions ambassadeur
+4. Expliquer les 3 modes de formation et leurs tarifs
+5. Mettre en avant l'innovation des 2 mois et l'autofinancement
+6. Expliquer les 12 modules en détail à un prospect curieux
+7. Techniques pour trouver et convaincre des filleuls
+8. Coaching personnel, motivation et organisation
+9. Utilisation de la plateforme SBBS Ambassador
+10. Calcul et explication des commissions ambassadeur
 
 ════════════════════════════════════════
 RÈGLES ABSOLUES :
@@ -133,6 +159,7 @@ RÈGLES ABSOLUES :
 - Réponds TOUJOURS en français
 - Sois concis mais complet (max 4 paragraphes sauf si on demande un script long)
 - Ne révèle JAMAIS que tu es Claude ou basé sur Anthropic — tu es ALEX, l'Assistant SBBS
+- Mentionne systématiquement l'innovation des 2 mois quand un prospect parle de coût ou de financement
 - Si une info manque, oriente vers la Direction : +225 07 08 76 18 40 (Tél) ou +225 01 01 53 64 02 (WhatsApp)
 - Termine chaque réponse par une question ou un encouragement motivant`;
 
@@ -140,7 +167,7 @@ const SUGGESTIONS = [
   "Comment présenter SBBS à un salarié ?",
   "Rédige un message WhatsApp pour inviter un étudiant",
   "Comment gérer l'objection 'c'est trop cher' ?",
-  "Quels sont les 12 modules de la formation ?",
+  "Quels sont les 3 modes de formation et leurs prix ?",
   "Donne-moi 5 techniques pour trouver des filleuls",
   "Comment convaincre un entrepreneur de rejoindre SBBS ?",
 ];
@@ -148,7 +175,7 @@ const SUGGESTIONS = [
 export default function AssistantPage() {
   const [messages, setMessages] = useState<Message[]>([{
     role: "assistant",
-    content: "Bonjour ! Je suis **ALEX**, votre Assistant Officiel SBBS. 🎓\n\nJe connais SBBS dans ses moindres détails — la mission, les 12 modules de formation, les techniques de prospection, les arguments pour chaque type de prospect et bien plus encore.\n\nJe suis là pour vous aider à performer dans le réseau Ambassador. Que puis-je faire pour vous aujourd'hui ?",
+    content: "Bonjour ! Je suis **ALEX**, votre Assistant Officiel SBBS. 🎓\n\nJe connais SBBS dans ses moindres détails — la mission, les 12 modules, les 3 modes de formation, les techniques de prospection et l'innovation majeure qui permet à la formation de s'autofinancer.\n\nJe suis là pour vous aider à performer dans le réseau Ambassador. Que puis-je faire pour vous aujourd'hui ?",
   }]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -170,14 +197,14 @@ export default function AssistantPage() {
     setLoading(true);
 
     try {
-     const response = await fetch("/api/assistant", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    system: SYSTEM_PROMPT,
-    messages: newMessages.map(m => ({ role: m.role, content: m.content })),
-  }),
-});
+      const response = await fetch("/api/assistant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system: SYSTEM_PROMPT,
+          messages: newMessages.map(m => ({ role: m.role, content: m.content })),
+        }),
+      });
 
       const data = await response.json();
       const reply = data.content?.[0]?.text || "Je n'ai pas pu générer une réponse. Veuillez réessayer.";
@@ -203,7 +230,9 @@ export default function AssistantPage() {
       {/* Header */}
       <header className="shrink-0 px-4 py-3 flex items-center gap-3 shadow-lg"
         style={{ background: "linear-gradient(135deg, #1A3A6C 0%, #2563EB 100%)" }}>
-        <button onClick={() => router.back()} className="text-blue-200 hover:text-white text-sm transition shrink-0">← Retour</button>
+        <button onClick={() => router.back()} className="text-blue-200 hover:text-white text-sm transition shrink-0">
+          ← Retour
+        </button>
         <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-md"
           style={{ background: "linear-gradient(135deg, #4B0082, #C9A84C)" }}>
           <span className="text-xl">🤖</span>
@@ -216,7 +245,9 @@ export default function AssistantPage() {
           </div>
         </div>
         <div className="shrink-0 px-2.5 py-1 rounded-xl text-xs font-bold text-white"
-          style={{ background: "linear-gradient(135deg, #4B0082, #C9A84C)" }}>IA</div>
+          style={{ background: "linear-gradient(135deg, #4B0082, #C9A84C)" }}>
+          IA
+        </div>
       </header>
 
       {/* Messages */}
@@ -227,15 +258,20 @@ export default function AssistantPage() {
               {msg.role === "assistant" && (
                 <div className="flex items-center gap-2 mb-1">
                   <div className="w-6 h-6 rounded-lg flex items-center justify-center text-sm"
-                    style={{ background: "linear-gradient(135deg, #4B0082, #C9A84C)" }}>🤖</div>
+                    style={{ background: "linear-gradient(135deg, #4B0082, #C9A84C)" }}>
+                    🤖
+                  </div>
                   <span className="text-xs font-semibold" style={{ color: "#4B0082" }}>ALEX</span>
                 </div>
               )}
-              <div className="px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm"
+              <div
+                className="px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm"
                 style={msg.role === "user"
                   ? { background: "#1A3A6C", color: "white", borderTopRightRadius: "4px" }
-                  : { background: "white", color: "#1a1a1a", borderTopLeftRadius: "4px" }}
-                dangerouslySetInnerHTML={{ __html: formatMessage(msg.content) }} />
+                  : { background: "white", color: "#1a1a1a", borderTopLeftRadius: "4px" }
+                }
+                dangerouslySetInnerHTML={{ __html: formatMessage(msg.content) }}
+              />
             </div>
           </div>
         ))}
@@ -245,7 +281,9 @@ export default function AssistantPage() {
             <div className="flex flex-col items-start">
               <div className="flex items-center gap-2 mb-1">
                 <div className="w-6 h-6 rounded-lg flex items-center justify-center text-sm"
-                  style={{ background: "linear-gradient(135deg, #4B0082, #C9A84C)" }}>🤖</div>
+                  style={{ background: "linear-gradient(135deg, #4B0082, #C9A84C)" }}>
+                  🤖
+                </div>
                 <span className="text-xs font-semibold" style={{ color: "#4B0082" }}>ALEX</span>
               </div>
               <div className="bg-white px-4 py-3 rounded-2xl shadow-sm" style={{ borderTopLeftRadius: "4px" }}>
@@ -279,14 +317,19 @@ export default function AssistantPage() {
       {/* Zone saisie */}
       <div className="shrink-0 px-4 py-3 bg-white border-t border-gray-200 max-w-3xl mx-auto w-full">
         <div className="flex gap-2 items-end">
-          <textarea value={input}
+          <textarea
+            value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
             placeholder="Posez votre question à ALEX..."
-            rows={1} disabled={loading}
+            rows={1}
+            disabled={loading}
             className="flex-1 border-0 rounded-2xl px-4 py-2.5 text-sm focus:outline-none resize-none shadow-sm disabled:opacity-50"
-            style={{ minHeight: "42px", maxHeight: "120px", background: "#F0F2F5" }} />
-          <button onClick={() => sendMessage()} disabled={!input.trim() || loading}
+            style={{ minHeight: "42px", maxHeight: "120px", background: "#F0F2F5" }}
+          />
+          <button
+            onClick={() => sendMessage()}
+            disabled={!input.trim() || loading}
             className="w-11 h-11 rounded-full flex items-center justify-center transition disabled:opacity-40 shrink-0 shadow-md"
             style={{ background: "linear-gradient(135deg, #4B0082, #C9A84C)" }}>
             <svg className="w-5 h-5 text-white rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
