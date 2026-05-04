@@ -49,6 +49,7 @@ const statutColors: Record<string, string> = {
 };
 
 const NAV_ITEMS = [
+  { title: "Investissement IP", description: "Groupe Intelligent Partnership", href: "/ip", icon: "💼", bg: "linear-gradient(135deg, #C9A84C, #92400E)" }
   { title: "Médiathèque", description: "Fichiers · Vidéos · Docs", href: "/dashboard/mediatheque", icon: "📁", bg: "linear-gradient(135deg, #0F766E 0%, #14B8A6 100%)" },
   { title: "Scripts WhatsApp", description: "Messages personnalisés", href: "/dashboard/scripts", icon: "📲", bg: "linear-gradient(135deg, #15803D 0%, #25D366 100%)" },
   { title: "Exports & Rapports", description: "Excel · CSV · PDF", href: "/dashboard/export", icon: "📄", bg: "linear-gradient(135deg, #991B1B 0%, #CC0000 100%)" },
