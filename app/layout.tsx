@@ -3,34 +3,18 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ChatFAB from "@/components/ChatFAB";
 import AssistantFAB from "@/components/AssistantFAB";
+import PageTransition from "@/components/PageTransition";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "SBBS Ambassador",
   description: "Plateforme de gestion du réseau ambassadeurs SBBS",
   manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "SBBS Ambassador",
-  },
-  formatDetection: {
-    telephone: false,
-  },
-  openGraph: {
-    type: "website",
-    siteName: "SBBS Ambassador",
-    title: "SBBS Ambassador",
-    description: "Plateforme de gestion du réseau ambassadeurs SBBS",
-  },
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "SBBS Ambassador" },
+  formatDetection: { telephone: false },
+  openGraph: { type: "website", siteName: "SBBS Ambassador", title: "SBBS Ambassador", description: "Plateforme de gestion du réseau ambassadeurs SBBS" },
 };
 
 export const viewport: Viewport = {
@@ -40,11 +24,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="fr">
       <head>
@@ -64,18 +44,16 @@ export default function RootLayout({
               if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
                   navigator.serviceWorker.register('/sw.js')
-                    .then(function(registration) {
-                      console.log('SW enregistré:', registration.scope);
-                    })
-                    .catch(function(error) {
-                      console.log('SW erreur:', error);
-                    });
+                    .then(function(r) { console.log('SW enregistré:', r.scope); })
+                    .catch(function(e) { console.log('SW erreur:', e); });
                 });
               }
             `,
           }}
         />
-        {children}
+        <PageTransition>
+          {children}
+        </PageTransition>
         <ChatFAB />
         <AssistantFAB />
       </body>
