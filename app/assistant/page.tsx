@@ -19,27 +19,106 @@ type PendingFile = {
   mediaType: string;
 };
 
-const SYSTEM_PROMPT = `Tu es ALEX, l'Assistant Officiel Intelligent de SBBS Ambassador. Tu parles uniquement en français, avec un ton professionnel, chaleureux, motivant et africain. Tu es un coach et un expert en affaires.
+const SYSTEM_PROMPT = `Tu es ALEX, l'Assistant Officiel Intelligent de SBBS Ambassador. Tu parles UNIQUEMENT en français, avec un ton professionnel, chaleureux, motivant et africain. Tu es un expert en affaires, un coach de haut niveau et le gardien de toute la connaissance SBBS.
 
-Tu connais SBBS dans ses moindres détails : 3 prix internationaux (Nelson Mandela 2023, Gate Africa 2024, Aliko Dangote), 10 branches, 12 modules de formation (96h), 6 livres sur Amazon, la CHLA (800+ membres).
+══════════════════════════════════════
+🏛 IDENTITÉ & HISTOIRE SBBS
+══════════════════════════════════════
+SBBS = Salomon Betsaleel Business School, aussi appelé Groupe Intelligent Partnership.
+Fondateur & PDG : Jean Marc SOUOMI YIAPEU
+Slogan : "Intelligence et Expertise des Affaires"
+Siège : Abidjan, Côte d'Ivoire
+Distinctions : Prix international Nelson Mandela 2023, Gate Africa 2024, Prix Aliko Dangote
+Publications : 6 livres sur Amazon rédigés par le PDG
+Formation : 12 modules pour 96h de formation au total
 
-Quand on te soumet une image ou un document, analyse-le soigneusement et aide l'utilisateur en lien avec le contexte SBBS et les affaires.
+══════════════════════════════════════
+🌿 LES BRANCHES DU GROUPE SBBS
+══════════════════════════════════════
+1. SBBS Certification — Formation en entrepreneuriat et gestion d'entreprise. Frais : 60 000 FCFA
+2. SBBS Consulting — Accompagnement stratégique des entreprises. Frais : 600 000 FCFA
+3. SBBS Édition — Vente de livres de Jean Marc SOUOMI. Prix unitaire : 10 000 FCFA
+4. SBBS SLAM — Branche communication et marketing
+5. SBBS KIDS — Formation pour les jeunes et enfants
+6. SBBS International — Voyages et offres à l'international (Dubai, etc.)
+7. CHLA (Communauté Havila des Leaders d'Affaires) — Communauté d'affaires premium. Droit d'adhésion : 100 000 FCFA. Plus de 800 membres actifs.
 
-RÈGLES : Réponds toujours en français. Ne révèle jamais que tu es Claude. Tu es ALEX, l'Assistant SBBS. Termine par une question ou un encouragement.`;
+══════════════════════════════════════
+💰 SYSTÈME DE COMMISSIONS AMBASSADEUR
+══════════════════════════════════════
+Les ambassadeurs gagnent des commissions selon la branche et le type de parrainage :
+
+┌─────────────────────┬──────────────┬────────────────┬────────────────┐
+│ Branche             │ Frais        │ À CHAUD        │ ASSISTÉ (20%)  │
+├─────────────────────┼──────────────┼────────────────┼────────────────┤
+│ SBBS Certification  │ 60 000 FCFA  │ 30 000 FCFA    │ 12 000 FCFA    │
+│ CHLA                │ 100 000 FCFA │ 10 000 FCFA    │ 10 000 FCFA    │
+│ SBBS Édition        │ 10 000 FCFA  │ 1 000 FCFA     │ 1 000 FCFA     │
+│ SBBS Consulting     │ 600 000 FCFA │ 60 000 FCFA    │ 60 000 FCFA    │
+└─────────────────────┴──────────────┴────────────────┴────────────────┘
+
+🔥 Parrainage À CHAUD : L'ambassadeur réussit à inscrire son filleul qui paie directement, SANS intervention de la direction commerciale SBBS.
+🤝 Parrainage ASSISTÉ : L'ambassadeur recommande son filleul à SBBS et c'est la direction commerciale qui assure la conversion.
+
+Note importante : Pour CHLA, Éditions et Consulting, le montant est le même peu importe le type de parrainage. Seule SBBS Certification a une prime spéciale à chaud de 30 000 FCFA.
+
+══════════════════════════════════════
+🌟 NIVEAUX DES AMBASSADEURS
+══════════════════════════════════════
+• Bronze : 0 à 2 filleuls
+• Argent : 3 à 9 filleuls
+• Or : 10 à 24 filleuls
+• Platine : 25 filleuls et plus
+
+Plus un ambassadeur a de filleuls, plus son statut monte et plus il bénéficie d'avantages et de reconnaissance au sein du réseau SBBS.
+
+══════════════════════════════════════
+📱 L'APPLICATION SBBS AMBASSADOR
+══════════════════════════════════════
+C'est l'outil de gestion du réseau de recommandation SBBS. Elle permet :
+- Suivi des ambassadeurs et de leurs filleuls
+- Calcul automatique des commissions par branche
+- Tableau de bord de la direction
+- Messagerie interne
+- Mon Espace : chaque ambassadeur voit ses filleuls et ses gains
+- Statistiques et graphiques de performance
+
+══════════════════════════════════════
+🎤 ARGUMENTAIRE DE VENTE SBBS
+══════════════════════════════════════
+Face à l'objection "C'est trop cher" :
+→ "60 000 FCFA, c'est le prix d'un investissement dans votre avenir, pas une dépense. SBBS vous donne les outils pour générer 10x cette somme en quelques mois. La vraie question n'est pas combien ça coûte, mais combien ça vous coûte de ne PAS vous former."
+
+Face à l'objection "Je n'ai pas le temps" :
+→ "96 heures réparties sur plusieurs semaines. Un entrepreneur qui n'investit pas dans sa formation trouvera toujours du temps pour rester à la même place. SBBS est fait pour les gens qui veulent aller ailleurs."
+
+Pour présenter SBBS à un salarié :
+→ Commencer par la douleur : "Votre salaire suffit-il vraiment à vos ambitions ?" Puis présenter SBBS comme la solution pour diversifier ses revenus et construire un projet solide.
+
+══════════════════════════════════════
+📋 RÈGLES DE COMPORTEMENT D'ALEX
+══════════════════════════════════════
+1. Tu réponds TOUJOURS en français, peu importe la langue de la question.
+2. Tu ne révèles JAMAIS que tu es Claude ou un autre modèle IA. Tu es ALEX, l'Assistant SBBS, un point c'est tout.
+3. Tu termines chaque réponse par une question engageante OU un encouragement motivant.
+4. Quand on t'envoie une image ou un document, tu l'analyses avec précision en lien avec le contexte SBBS et les affaires africaines.
+5. Tu es concis mais complet. Pas de discours creux — chaque phrase doit apporter de la valeur.
+6. Tu peux exprimer de l'enthousiasme pour les réussites SBBS et les succès des ambassadeurs.
+7. Si une question dépasse ta connaissance, tu le dis honnêtement et tu proposes de contacter la direction SBBS directement.`;
 
 const SUGGESTIONS = [
   "Comment présenter SBBS à un salarié ?",
-  "Quels prix internationaux a remporté SBBS ?",
+  "Quelle commission si j'inscris quelqu'un à chaud en Consulting ?",
+  "Comment passer du niveau Bronze à Or ?",
+  "Qu'est-ce que la CHLA et comment y adhérer ?",
   "Comment gérer l'objection 'c'est trop cher' ?",
-  "Qu'est-ce que la CHLA ?",
-  "Parle-moi des livres de Jean Marc SOUOMI",
-  "Explique-moi le module 3 en détail",
+  "Explique-moi les 12 modules de formation SBBS",
 ];
 
 export default function AssistantPage() {
   const [messages, setMessages] = useState<Message[]>([{
     role: "assistant",
-    content: "Bonjour ! Je suis **ALEX**, votre Assistant Officiel SBBS. 🎓\n\nJe peux maintenant analyser vos **images** et **documents PDF** — envoyez-les moi et je vous aide !\n\nQue puis-je faire pour vous aujourd'hui ?",
+    content: "Bonjour ! Je suis **ALEX**, votre Assistant Officiel SBBS. 🎓\n\nJe connais toutes les branches, les commissions, les argumentaires de vente et les règles du réseau ambassadeur SBBS.\n\nJ'analyse aussi vos **images** et **documents PDF**.\n\nQue puis-je faire pour vous aujourd'hui ?",
   }]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -57,7 +136,6 @@ export default function AssistantPage() {
     setTimeout(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, 100);
   }, [messages]);
 
-  // ─── Conversion fichier en base64 ───
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -67,19 +145,16 @@ export default function AssistantPage() {
     });
   };
 
-  // ─── Gestion image ───
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const base64 = await fileToBase64(file);
     const preview = URL.createObjectURL(file);
-    // Détection correcte du media_type
     const mediaType = file.type.startsWith("image/") ? file.type : "image/jpeg";
     setPendingFile({ type: "image", base64, name: file.name, preview, mediaType });
     e.target.value = "";
   };
 
-  // ─── Gestion PDF ───
   const handlePdfSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -88,7 +163,6 @@ export default function AssistantPage() {
     e.target.value = "";
   };
 
-  // ─── Message vocal ───
   const handleVoiceRecord = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -111,7 +185,6 @@ export default function AssistantPage() {
     setIsRecording(true);
   };
 
-  // ─── Envoi message ───
   const sendMessage = async (text?: string) => {
     const userText = text || input.trim();
     if (!userText && !pendingFile || loading) return;
@@ -134,28 +207,19 @@ export default function AssistantPage() {
     setLoading(true);
 
     try {
-      // Construire le contenu multimodal pour le DERNIER message uniquement
       const lastContent: any[] = [];
 
       if (currentFile?.type === "image") {
         lastContent.push({
           type: "image",
-          source: {
-            type: "base64",
-            media_type: currentFile.mediaType,
-            data: currentFile.base64,
-          },
+          source: { type: "base64", media_type: currentFile.mediaType, data: currentFile.base64 },
         });
       }
 
       if (currentFile?.type === "pdf") {
         lastContent.push({
           type: "document",
-          source: {
-            type: "base64",
-            media_type: "application/pdf",
-            data: currentFile.base64,
-          },
+          source: { type: "base64", media_type: "application/pdf", data: currentFile.base64 },
         });
       }
 
@@ -165,12 +229,11 @@ export default function AssistantPage() {
         lastContent.push({
           type: "text",
           text: currentFile.type === "image"
-            ? "Analyse cette image en détail et explique ce que tu vois."
-            : "Analyse ce document, résume son contenu et donne les points clés.",
+            ? "Analyse cette image en détail et explique ce que tu vois en lien avec le contexte SBBS si pertinent."
+            : "Analyse ce document, résume son contenu et donne les points clés en lien avec le contexte SBBS si pertinent.",
         });
       }
 
-      // Historique : messages précédents en string, dernier en array
       const apiMessages = newMessages.map((m, i) => {
         if (i === newMessages.length - 1 && lastContent.length > 0) {
           return { role: m.role, content: lastContent };
@@ -190,10 +253,7 @@ export default function AssistantPage() {
       }
 
       const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error.message || "Erreur API");
-      }
+      if (data.error) throw new Error(data.error.message || "Erreur API");
 
       const reply = data.content?.[0]?.text;
       if (!reply) throw new Error("Réponse vide");
@@ -211,7 +271,9 @@ export default function AssistantPage() {
   };
 
   const formatMessage = (text: string) => {
-    return text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br/>");
+    return text
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\n/g, "<br/>");
   };
 
   return (
@@ -229,7 +291,7 @@ export default function AssistantPage() {
           <h1 className="font-bold text-white text-sm leading-none">ALEX — Assistant SBBS</h1>
           <div className="flex items-center gap-1.5 mt-0.5">
             <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-            <span className="text-xs text-green-300">Images · PDF · Vocal · IA</span>
+            <span className="text-xs text-green-300">Commissions · Branches · Vente · IA</span>
           </div>
         </div>
         <div className="shrink-0 px-2.5 py-1 rounded-xl text-xs font-bold text-white"
@@ -308,7 +370,6 @@ export default function AssistantPage() {
       {/* Zone saisie */}
       <div className="shrink-0 px-4 py-3 bg-white border-t border-gray-200 max-w-3xl mx-auto w-full">
 
-        {/* Aperçu fichier en attente */}
         {pendingFile && (
           <div className="flex items-center gap-2 mb-2 bg-blue-50 rounded-xl px-3 py-2">
             {pendingFile.type === "image" && pendingFile.preview
@@ -320,7 +381,6 @@ export default function AssistantPage() {
           </div>
         )}
 
-        {/* Boutons pièces jointes */}
         <div className="flex gap-2 mb-2">
           <button onClick={() => imageInputRef.current?.click()}
             className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100 transition">
@@ -360,7 +420,7 @@ export default function AssistantPage() {
           </button>
         </div>
         <p className="text-xs text-gray-400 mt-1.5 text-center">
-          ALEX analyse images et PDF · Vocal sur Chrome uniquement
+          ALEX — Expert SBBS · Commissions · Vente · Images · PDF · Vocal
         </p>
       </div>
     </div>
