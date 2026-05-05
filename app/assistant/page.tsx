@@ -6,222 +6,182 @@ import { useRouter } from "next/navigation";
 type Message = {
   role: "user" | "assistant";
   content: string;
+  attachmentType?: "image" | "pdf";
+  attachmentName?: string;
+  attachmentPreview?: string;
 };
 
-const SYSTEM_PROMPT = `Tu es ALEX, l'Assistant Officiel Intelligent de SBBS Ambassador — la plateforme digitale du réseau d'ambassadeurs du Groupe SBBS (Salomon Betsaleel Business School), Groupe Intelligent Partnership, basé à Abidjan, Côte d'Ivoire.
+const SYSTEM_PROMPT = `Tu es ALEX, l'Assistant Officiel Intelligent de SBBS Ambassador. Tu parles uniquement en français, avec un ton professionnel, chaleureux, motivant et africain. Tu es un coach et un expert en affaires.
 
-Tu parles uniquement en français, avec un ton professionnel, chaleureux, motivant et africain. Tu es un coach et un expert en affaires.
+Tu connais SBBS dans ses moindres détails : 3 prix internationaux (Nelson Mandela 2023, Gate Africa 2024, Aliko Dangote), 10 branches, 12 modules de formation (96h), 6 livres sur Amazon, la CHLA (800+ membres).
 
-════════════════════════════════════════
-CONNAISSANCE COMPLÈTE DE SBBS
-════════════════════════════════════════
+Quand on te soumet une image ou un document, analyse-le et aide l'utilisateur en lien avec le contexte SBBS et les affaires.
 
-IDENTITÉ :
-- Nom complet : Salomon Betsaleel Business School (SBBS)
-- Signature : "Intelligence & Expertise des Affaires"
-- Fondateur & Président : Jean Marc SOUOMI YIAPEU
-- Groupe : Intelligent Partnership (IP)
-- Siège : Abidjan Cocody Riviera 4, Cité Terre Afrique, non loin du rond-point Affi N'Guessan, très proche de la cité verdoyante
-- Téléphone : +225 07 08 76 18 40
-- WhatsApp : +225 01 01 53 64 02
-- Fixe : +225 21 50 00 89 11
-- Email : sbbs@intelligentpartnership.net
-- Site Web : www.intelligentpartnership.net
-
-MISSION :
-Former des femmes et des hommes pour en faire des personnes aguerries dans la philosophie et la pratique des affaires.
-
-CIBLES :
-1. Les étudiants : pour qu'ils puissent créer de la richesse même en étant sur les bancs
-2. Les salariés : qui pourront créer d'autres sources de revenus en dehors de leurs salaires
-3. Les entrepreneurs : qui sauront comment développer leurs affaires actuelles et en créer d'autres
-
-3 BÉNÉFICES CLÉS :
-1. Acquérir une compréhension profonde des affaires
-2. Créer dès maintenant de petites affaires à développer dans le temps pour en faire des entreprises de référence
-3. Bannir la peur pour son avenir professionnel et financier, ainsi que celui de ses enfants
-
-EXPERTISE / AVANTAGES COMPARATIFS :
-1. Formation très pratique avec accompagnement pour la création et le lancement de 2 projets d'affaires concrets
-2. Ancrage sur la riche expérience du groupe Intelligent Partnership : Bourse, Immobilier, Négoce de matières premières, Commerce général, Financement de Start-up
-3. Possibilité de bénéficier d'un financement pour le lancement de son projet
-4. Adhésion à un puissant réseau de femmes et d'hommes d'affaires dans l'immobilier, le tourisme, l'agriculture, l'industrie
-
-PROFIL DU PRÉSIDENT Jean Marc SOUOMI :
-- Président du groupe Intelligent Partnership (IP)
-- Président de SBBS, CHLA, fondation Souomi Sacerdoce Royal (SSR)
-- Ex Administrateur des Services Financiers, Ex Inspecteur Vérificateur des Finances
-- Auditeur interne certifié, Économiste, Banquier, Statisticien, Investisseur, Philanthrope
-
-════════════════════════════════════════
-PROGRAMME DE FORMATION SBBS CERTIFICATION
-════════════════════════════════════════
-
-TITRE : "Comprendre, créer et développer les affaires"
-PUBLIC : Étudiants, salariés, entrepreneurs | PRÉREQUIS : Savoir lire et écrire
-DURÉE : 5 mois (innovation : formation simplifiée et raccourcie) | DÉBUT : En permanence
-
-🏆 INNOVATION MAJEURE — À mentionner absolument aux prospects :
-Dès les 2 premiers mois de cours, les apprenants sont capables de créer des affaires ou d'améliorer leur business actuel pour générer des revenus. Ces revenus servent à financer les 3 mois restants de la formation. Autrement dit, la formation peut s'autofinancer ! C'est une innovation de taille qui distingue radicalement SBBS de toutes les autres écoles de formation.
-
-CHAQUE APPRENANT DISPOSE D'UN EXPERT ACCOMPAGNATEUR PERSONNEL qui l'aide pas à pas à réussir absolument — quel que soit le mode de formation choisi.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. FORMATION PRÉSENTIELLE (en salle)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-- Coût total : 470 000 FCFA
-- Inscription : 70 000 FCFA (pour réserver sa place et démarrer immédiatement)
-- Scolarité : 400 000 FCFA échelonnés sur 4 à 5 mois de formation
-- Expert accompagnateur personnel inclus
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-2. FORMATION EN LIGNE — VIDÉOS PRÉENREGISTRÉES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-- Coût total : 300 000 FCFA
-- Ouverture d'accès : 50 000 FCFA (pour créer les accès et démarrer avec le Module 1)
-- Reste : 250 000 FCFA payés par tranches selon arrangement avec la Direction
-- Contenu : vidéos préenregistrées des cours + ateliers pratiques à visionner librement
-- Après chaque module : séance de débriefing avec l'équipe des consultants SBBS
-- Expert accompagnateur personnel inclus
-- Pour les détails des tranches : contacter la Direction Commerciale et Marketing
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-3. FORMATION EN LIGNE — COURS EN DIRECT ZOOM
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-- Coût total : 470 000 FCFA
-- Inscription : 70 000 FCFA
-- Scolarité : 400 000 FCFA échelonnés sur 5 mois de cours
-- Contenu : cours en direct via Zoom avec le formateur — interaction en temps réel
-- Expert accompagnateur personnel inclus
-
-CONTACTS DIRECTION COMMERCIALE ET MARKETING :
-Tél : +225 07 08 76 18 40 | WhatsApp : +225 01 01 53 64 02 | Fixe : +225 21 50 00 89 11
-
-LES 12 MODULES :
-
-Module 1 - Développement personnel
-Cadre de vision, leadership, influence et persuasion, résilience. Apprendre à se connaître, définir sa vision de vie, développer son leadership et sa capacité à influencer positivement.
-
-Module 2 - Philosophie des affaires
-ABC des affaires, développer un projet. Comprendre les fondements des affaires, les lois qui gouvernent la création de richesse, comment structurer un projet.
-
-Module 3 - Devenir un entrepreneur expert
-Idée, création de valeur, démarche effectuale, gestion des risques, gestion financière. Transformer une idée en business model viable, créer de la valeur, gérer les finances.
-
-Module 4 - Devenir un investisseur averti
-Philosophie de l'investissement, concepts clés, critères de décision, gestion des risques, création d'un fonds d'investissement. Comprendre les marchés, savoir choisir ses investissements.
-
-Module 5 - Maîtriser l'art du marketing
-Stratégies marketing, positionnement, communication, marketing digital. Attirer et fidéliser des clients, construire une marque forte.
-
-Module 6 - Maîtriser l'art de la vente
-Techniques de vente, prospection, closing, gestion des objections. Développer ses compétences commerciales, convaincre et transformer des prospects en clients.
-
-Module 7 - Maîtriser l'art de la négociation
-Stratégies de négociation, communication non-verbale, psychologie. Négocier des contrats avantageux, défendre ses intérêts, trouver des accords gagnant-gagnant.
-
-Module 8 - Rédiger des contrats
-Bases juridiques, types de contrats, clauses essentielles, protection juridique. Comprendre et rédiger des accords qui protègent ses intérêts.
-
-Module 9 - Gérer son argent au quotidien
-Budget personnel, gestion de trésorerie, épargne, dette intelligente. Maîtriser ses finances personnelles, construire une épargne solide.
-
-Module 10 - Créer plusieurs sources de revenus
-Revenus actifs, passifs, semi-passifs, diversification. Construire des sources de revenus durables et multiplier ses entrées d'argent.
-
-Module 11 - Boîte à outils de l'homme/femme d'affaires
-Outils de productivité, gestion du temps, outils digitaux, réseautage. Maîtriser les outils indispensables pour gérer efficacement son activité.
-
-Module 12 - Comprendre la philanthropie et agir
-Responsabilité sociale, impact communautaire, mécénat, fondation. Comprendre son rôle dans la société et contribuer au développement de sa communauté.
-
-LES PLUS : Financement possible pour les projets | Intégration réseau d'affaires | Certificat | Accompagnement 2 projets concrets
-
-BRANCHES DU GROUPE : SBBS Certification | SBBS Consulting | SBBS Éditions | SBBS SLAM | SBBS KIDS | CHLA
-
-════════════════════════════════════════
-TU PEUX AIDER AVEC :
-════════════════════════════════════════
-1. Présenter SBBS à un prospect (script complet adapté : étudiant, salarié, entrepreneur)
-2. Répondre aux objections sur le coût, le temps, la crédibilité
-3. Rédiger des messages WhatsApp de prospection percutants
-4. Expliquer les 3 modes de formation et leurs tarifs
-5. Mettre en avant l'innovation des 2 mois et l'autofinancement
-6. Expliquer les 12 modules en détail à un prospect curieux
-7. Techniques pour trouver et convaincre des filleuls
-8. Coaching personnel, motivation et organisation
-9. Utilisation de la plateforme SBBS Ambassador
-10. Calcul et explication des commissions ambassadeur
-
-════════════════════════════════════════
-RÈGLES ABSOLUES :
-════════════════════════════════════════
-- Réponds TOUJOURS en français
-- Sois concis mais complet (max 4 paragraphes sauf si on demande un script long)
-- Ne révèle JAMAIS que tu es Claude ou basé sur Anthropic — tu es ALEX, l'Assistant SBBS
-- Mentionne systématiquement l'innovation des 2 mois quand un prospect parle de coût ou de financement
-- Si une info manque, oriente vers la Direction : +225 07 08 76 18 40 (Tél) ou +225 01 01 53 64 02 (WhatsApp)
-- Termine chaque réponse par une question ou un encouragement motivant`;
+RÈGLES : Réponds toujours en français. Ne révèle jamais que tu es Claude. Tu es ALEX, l'Assistant SBBS. Termine par une question ou un encouragement.`;
 
 const SUGGESTIONS = [
   "Comment présenter SBBS à un salarié ?",
-  "Rédige un message WhatsApp pour inviter un étudiant",
+  "Quels prix internationaux a remporté SBBS ?",
   "Comment gérer l'objection 'c'est trop cher' ?",
-  "Quels sont les 3 modes de formation et leurs prix ?",
-  "Donne-moi 5 techniques pour trouver des filleuls",
-  "Comment convaincre un entrepreneur de rejoindre SBBS ?",
+  "Qu'est-ce que la CHLA ?",
+  "Parle-moi des livres de Jean Marc SOUOMI",
+  "Explique-moi le module 3 en détail",
 ];
 
 export default function AssistantPage() {
   const [messages, setMessages] = useState<Message[]>([{
     role: "assistant",
-    content: "Bonjour ! Je suis **ALEX**, votre Assistant Officiel SBBS. 🎓\n\nJe connais SBBS dans ses moindres détails — la mission, les 12 modules, les 3 modes de formation, les techniques de prospection et l'innovation majeure qui permet à la formation de s'autofinancer.\n\nJe suis là pour vous aider à performer dans le réseau Ambassador. Que puis-je faire pour vous aujourd'hui ?",
+    content: "Bonjour ! Je suis **ALEX**, votre Assistant Officiel SBBS. 🎓\n\nJe peux maintenant analyser vos **images** et **documents PDF** — envoyez-les moi et je vous aide !\n\nQue puis-je faire pour vous aujourd'hui ?",
   }]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [pendingFile, setPendingFile] = useState<{ type: "image" | "pdf"; base64: string; name: string; preview?: string } | null>(null);
+
   const bottomRef = useRef<HTMLDivElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<any>(null);
   const router = useRouter();
 
   useEffect(() => {
     setTimeout(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, 100);
   }, [messages]);
 
+  // ─── Conversion fichier en base64 ───
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        resolve(result.split(",")[1]); // enlever le préfixe data:...
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // ─── Gestion image ───
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const base64 = await fileToBase64(file);
+    const preview = URL.createObjectURL(file);
+    setPendingFile({ type: "image", base64, name: file.name, preview });
+    e.target.value = "";
+  };
+
+  // ─── Gestion PDF ───
+  const handlePdfSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const base64 = await fileToBase64(file);
+    setPendingFile({ type: "pdf", base64, name: file.name });
+    e.target.value = "";
+  };
+
+  // ─── Message vocal ───
+  const handleVoiceRecord = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("La reconnaissance vocale n'est pas supportée sur ce navigateur. Utilisez Chrome.");
+      return;
+    }
+
+    if (isRecording) {
+      recognitionRef.current?.stop();
+      setIsRecording(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "fr-FR";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setInput(prev => prev + (prev ? " " : "") + transcript);
+    };
+
+    recognition.onend = () => { setIsRecording(false); };
+    recognition.onerror = () => { setIsRecording(false); };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsRecording(true);
+  };
+
+  // ─── Envoi message ───
   const sendMessage = async (text?: string) => {
     const userText = text || input.trim();
-    if (!userText || loading) return;
+    if (!userText && !pendingFile || loading) return;
 
-    const userMessage: Message = { role: "user", content: userText };
+    const displayContent = userText || (pendingFile ? `[${pendingFile.name}]` : "");
+    const userMessage: Message = {
+      role: "user",
+      content: displayContent,
+      attachmentType: pendingFile?.type,
+      attachmentName: pendingFile?.name,
+      attachmentPreview: pendingFile?.preview,
+    };
+
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setInput("");
+    const currentFile = pendingFile;
+    setPendingFile(null);
     setLoading(true);
 
     try {
+      // Construire le contenu du message pour l'API
+      let messageContent: any[] = [];
+
+      if (currentFile?.type === "image") {
+        messageContent.push({
+          type: "image",
+          source: { type: "base64", media_type: "image/jpeg", data: currentFile.base64 },
+        });
+      }
+
+      if (currentFile?.type === "pdf") {
+        messageContent.push({
+          type: "document",
+          source: { type: "base64", media_type: "application/pdf", data: currentFile.base64 },
+        });
+      }
+
+      if (userText) {
+        messageContent.push({ type: "text", text: userText });
+      } else if (currentFile) {
+        messageContent.push({ type: "text", text: currentFile.type === "image" ? "Analyse cette image et aide-moi." : "Analyse ce document et résume son contenu." });
+      }
+
+      // Construire l'historique des messages pour l'API
+      const apiMessages = newMessages.map((m, i) => {
+        if (i === newMessages.length - 1 && messageContent.length > 1) {
+          return { role: m.role, content: messageContent };
+        }
+        return { role: m.role, content: m.content };
+      });
+
       const response = await fetch("/api/assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          system: SYSTEM_PROMPT,
-          messages: newMessages.map(m => ({ role: m.role, content: m.content })),
-        }),
+        body: JSON.stringify({ system: SYSTEM_PROMPT, messages: apiMessages }),
       });
 
       const data = await response.json();
       const reply = data.content?.[0]?.text || "Je n'ai pas pu générer une réponse. Veuillez réessayer.";
       setMessages(prev => [...prev, { role: "assistant", content: reply }]);
     } catch {
-      setMessages(prev => [...prev, {
-        role: "assistant",
-        content: "⚠️ Une erreur s'est produite. Vérifiez votre connexion et réessayez.",
-      }]);
+      setMessages(prev => [...prev, { role: "assistant", content: "⚠️ Une erreur s'est produite. Vérifiez votre connexion." }]);
     }
     setLoading(false);
   };
 
   const formatMessage = (text: string) => {
-    return text
-      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-      .replace(/\n/g, "<br/>");
+    return text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br/>");
   };
 
   return (
@@ -230,9 +190,7 @@ export default function AssistantPage() {
       {/* Header */}
       <header className="shrink-0 px-4 py-3 flex items-center gap-3 shadow-lg"
         style={{ background: "linear-gradient(135deg, #1A3A6C 0%, #2563EB 100%)" }}>
-        <button onClick={() => router.back()} className="text-blue-200 hover:text-white text-sm transition shrink-0">
-          ← Retour
-        </button>
+        <button onClick={() => router.back()} className="text-blue-200 hover:text-white text-sm transition shrink-0">← Retour</button>
         <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-md"
           style={{ background: "linear-gradient(135deg, #4B0082, #C9A84C)" }}>
           <span className="text-xl">🤖</span>
@@ -241,13 +199,11 @@ export default function AssistantPage() {
           <h1 className="font-bold text-white text-sm leading-none">ALEX — Assistant SBBS</h1>
           <div className="flex items-center gap-1.5 mt-0.5">
             <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-            <span className="text-xs text-green-300">En ligne · Expert SBBS · Propulsé par IA</span>
+            <span className="text-xs text-green-300">Images · PDF · Vocal · IA</span>
           </div>
         </div>
         <div className="shrink-0 px-2.5 py-1 rounded-xl text-xs font-bold text-white"
-          style={{ background: "linear-gradient(135deg, #4B0082, #C9A84C)" }}>
-          IA
-        </div>
+          style={{ background: "linear-gradient(135deg, #4B0082, #C9A84C)" }}>IA</div>
       </header>
 
       {/* Messages */}
@@ -258,20 +214,29 @@ export default function AssistantPage() {
               {msg.role === "assistant" && (
                 <div className="flex items-center gap-2 mb-1">
                   <div className="w-6 h-6 rounded-lg flex items-center justify-center text-sm"
-                    style={{ background: "linear-gradient(135deg, #4B0082, #C9A84C)" }}>
-                    🤖
-                  </div>
+                    style={{ background: "linear-gradient(135deg, #4B0082, #C9A84C)" }}>🤖</div>
                   <span className="text-xs font-semibold" style={{ color: "#4B0082" }}>ALEX</span>
                 </div>
               )}
-              <div
-                className="px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm"
+              <div className="px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm"
                 style={msg.role === "user"
                   ? { background: "#1A3A6C", color: "white", borderTopRightRadius: "4px" }
-                  : { background: "white", color: "#1a1a1a", borderTopLeftRadius: "4px" }
-                }
-                dangerouslySetInnerHTML={{ __html: formatMessage(msg.content) }}
-              />
+                  : { background: "white", color: "#1a1a1a", borderTopLeftRadius: "4px" }}>
+                {/* Aperçu image */}
+                {msg.attachmentType === "image" && msg.attachmentPreview && (
+                  <img src={msg.attachmentPreview} alt={msg.attachmentName} className="rounded-xl mb-2 max-w-full" style={{ maxHeight: "180px", objectFit: "cover" }} />
+                )}
+                {/* Aperçu PDF */}
+                {msg.attachmentType === "pdf" && (
+                  <div className="flex items-center gap-2 mb-2 bg-white/20 rounded-xl px-3 py-2">
+                    <span className="text-xl">📄</span>
+                    <span className="text-xs font-medium truncate">{msg.attachmentName}</span>
+                  </div>
+                )}
+                {msg.content && msg.content !== `[${msg.attachmentName}]` && (
+                  <span dangerouslySetInnerHTML={{ __html: formatMessage(msg.content) }} />
+                )}
+              </div>
             </div>
           </div>
         ))}
@@ -281,9 +246,7 @@ export default function AssistantPage() {
             <div className="flex flex-col items-start">
               <div className="flex items-center gap-2 mb-1">
                 <div className="w-6 h-6 rounded-lg flex items-center justify-center text-sm"
-                  style={{ background: "linear-gradient(135deg, #4B0082, #C9A84C)" }}>
-                  🤖
-                </div>
+                  style={{ background: "linear-gradient(135deg, #4B0082, #C9A84C)" }}>🤖</div>
                 <span className="text-xs font-semibold" style={{ color: "#4B0082" }}>ALEX</span>
               </div>
               <div className="bg-white px-4 py-3 rounded-2xl shadow-sm" style={{ borderTopLeftRadius: "4px" }}>
@@ -316,20 +279,58 @@ export default function AssistantPage() {
 
       {/* Zone saisie */}
       <div className="shrink-0 px-4 py-3 bg-white border-t border-gray-200 max-w-3xl mx-auto w-full">
+
+        {/* Fichier en attente */}
+        {pendingFile && (
+          <div className="flex items-center gap-2 mb-2 bg-blue-50 rounded-xl px-3 py-2">
+            {pendingFile.type === "image" && pendingFile.preview
+              ? <img src={pendingFile.preview} alt="" className="w-8 h-8 rounded-lg object-cover" />
+              : <span className="text-xl">📄</span>
+            }
+            <span className="text-xs text-sbbs-blue font-medium truncate flex-1">{pendingFile.name}</span>
+            <button onClick={() => setPendingFile(null)} className="text-gray-400 hover:text-red-500 text-sm">✕</button>
+          </div>
+        )}
+
+        {/* Boutons pièces jointes */}
+        <div className="flex gap-2 mb-2">
+          <button onClick={() => imageInputRef.current?.click()}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100 transition"
+            title="Joindre une image">
+            🖼️ Image
+          </button>
+          <button onClick={() => pdfInputRef.current?.click()}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100 transition"
+            title="Joindre un PDF">
+            📄 PDF
+          </button>
+          <button onClick={handleVoiceRecord}
+            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border transition ${
+              isRecording
+                ? "bg-red-500 border-red-500 text-white animate-pulse"
+                : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
+            }`}
+            title={isRecording ? "Arrêter l'enregistrement" : "Message vocal"}>
+            🎤 {isRecording ? "Arrêter" : "Vocal"}
+          </button>
+        </div>
+
+        {/* Inputs cachés */}
+        <input ref={imageInputRef} type="file" className="hidden" accept="image/*"
+          onChange={handleImageSelect} />
+        <input ref={pdfInputRef} type="file" className="hidden" accept=".pdf"
+          onChange={handlePdfSelect} />
+
+        {/* Zone texte */}
         <div className="flex gap-2 items-end">
-          <textarea
-            value={input}
+          <textarea value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-            placeholder="Posez votre question à ALEX..."
-            rows={1}
-            disabled={loading}
+            placeholder={isRecording ? "Parlez maintenant..." : "Posez votre question à ALEX..."}
+            rows={1} disabled={loading}
             className="flex-1 border-0 rounded-2xl px-4 py-2.5 text-sm focus:outline-none resize-none shadow-sm disabled:opacity-50"
-            style={{ minHeight: "42px", maxHeight: "120px", background: "#F0F2F5" }}
-          />
-          <button
-            onClick={() => sendMessage()}
-            disabled={!input.trim() || loading}
+            style={{ minHeight: "42px", maxHeight: "120px", background: "#F0F2F5" }} />
+          <button onClick={() => sendMessage()} disabled={(!input.trim() && !pendingFile) || loading}
             className="w-11 h-11 rounded-full flex items-center justify-center transition disabled:opacity-40 shrink-0 shadow-md"
             style={{ background: "linear-gradient(135deg, #4B0082, #C9A84C)" }}>
             <svg className="w-5 h-5 text-white rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -338,7 +339,7 @@ export default function AssistantPage() {
           </button>
         </div>
         <p className="text-xs text-gray-400 mt-1.5 text-center">
-          ALEX connaît SBBS en profondeur · Pour toute décision importante, confirmez avec la Direction
+          ALEX analyse images et PDF · Vocal sur Chrome uniquement
         </p>
       </div>
     </div>
