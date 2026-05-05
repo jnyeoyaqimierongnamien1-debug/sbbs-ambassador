@@ -11,11 +11,19 @@ type Message = {
   attachmentPreview?: string;
 };
 
+type PendingFile = {
+  type: "image" | "pdf";
+  base64: string;
+  name: string;
+  preview?: string;
+  mediaType: string;
+};
+
 const SYSTEM_PROMPT = `Tu es ALEX, l'Assistant Officiel Intelligent de SBBS Ambassador. Tu parles uniquement en français, avec un ton professionnel, chaleureux, motivant et africain. Tu es un coach et un expert en affaires.
 
 Tu connais SBBS dans ses moindres détails : 3 prix internationaux (Nelson Mandela 2023, Gate Africa 2024, Aliko Dangote), 10 branches, 12 modules de formation (96h), 6 livres sur Amazon, la CHLA (800+ membres).
 
-Quand on te soumet une image ou un document, analyse-le et aide l'utilisateur en lien avec le contexte SBBS et les affaires.
+Quand on te soumet une image ou un document, analyse-le soigneusement et aide l'utilisateur en lien avec le contexte SBBS et les affaires.
 
 RÈGLES : Réponds toujours en français. Ne révèle jamais que tu es Claude. Tu es ALEX, l'Assistant SBBS. Termine par une question ou un encouragement.`;
 
@@ -36,7 +44,8 @@ export default function AssistantPage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [pendingFile, setPendingFile] = useState<{ type: "image" | "pdf"; base64: string; name: string; preview?: string } | null>(null);
+  const [pendingFile, setPendingFile] = useState<PendingFile | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -52,10 +61,7 @@ export default function AssistantPage() {
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        resolve(result.split(",")[1]); // enlever le préfixe data:...
-      };
+      reader.onload = () => { resolve((reader.result as string).split(",")[1]); };
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
@@ -67,7 +73,9 @@ export default function AssistantPage() {
     if (!file) return;
     const base64 = await fileToBase64(file);
     const preview = URL.createObjectURL(file);
-    setPendingFile({ type: "image", base64, name: file.name, preview });
+    // Détection correcte du media_type
+    const mediaType = file.type.startsWith("image/") ? file.type : "image/jpeg";
+    setPendingFile({ type: "image", base64, name: file.name, preview, mediaType });
     e.target.value = "";
   };
 
@@ -76,7 +84,7 @@ export default function AssistantPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     const base64 = await fileToBase64(file);
-    setPendingFile({ type: "pdf", base64, name: file.name });
+    setPendingFile({ type: "pdf", base64, name: file.name, mediaType: "application/pdf" });
     e.target.value = "";
   };
 
@@ -87,26 +95,17 @@ export default function AssistantPage() {
       alert("La reconnaissance vocale n'est pas supportée sur ce navigateur. Utilisez Chrome.");
       return;
     }
-
-    if (isRecording) {
-      recognitionRef.current?.stop();
-      setIsRecording(false);
-      return;
-    }
-
+    if (isRecording) { recognitionRef.current?.stop(); setIsRecording(false); return; }
     const recognition = new SpeechRecognition();
     recognition.lang = "fr-FR";
     recognition.continuous = false;
     recognition.interimResults = false;
-
     recognition.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript;
       setInput(prev => prev + (prev ? " " : "") + transcript);
     };
-
     recognition.onend = () => { setIsRecording(false); };
     recognition.onerror = () => { setIsRecording(false); };
-
     recognitionRef.current = recognition;
     recognition.start();
     setIsRecording(true);
@@ -116,6 +115,7 @@ export default function AssistantPage() {
   const sendMessage = async (text?: string) => {
     const userText = text || input.trim();
     if (!userText && !pendingFile || loading) return;
+    setError(null);
 
     const displayContent = userText || (pendingFile ? `[${pendingFile.name}]` : "");
     const userMessage: Message = {
@@ -134,33 +134,46 @@ export default function AssistantPage() {
     setLoading(true);
 
     try {
-      // Construire le contenu du message pour l'API
-      let messageContent: any[] = [];
+      // Construire le contenu multimodal pour le DERNIER message uniquement
+      const lastContent: any[] = [];
 
       if (currentFile?.type === "image") {
-        messageContent.push({
+        lastContent.push({
           type: "image",
-          source: { type: "base64", media_type: "image/jpeg", data: currentFile.base64 },
+          source: {
+            type: "base64",
+            media_type: currentFile.mediaType,
+            data: currentFile.base64,
+          },
         });
       }
 
       if (currentFile?.type === "pdf") {
-        messageContent.push({
+        lastContent.push({
           type: "document",
-          source: { type: "base64", media_type: "application/pdf", data: currentFile.base64 },
+          source: {
+            type: "base64",
+            media_type: "application/pdf",
+            data: currentFile.base64,
+          },
         });
       }
 
       if (userText) {
-        messageContent.push({ type: "text", text: userText });
+        lastContent.push({ type: "text", text: userText });
       } else if (currentFile) {
-        messageContent.push({ type: "text", text: currentFile.type === "image" ? "Analyse cette image et aide-moi." : "Analyse ce document et résume son contenu." });
+        lastContent.push({
+          type: "text",
+          text: currentFile.type === "image"
+            ? "Analyse cette image en détail et explique ce que tu vois."
+            : "Analyse ce document, résume son contenu et donne les points clés.",
+        });
       }
 
-      // Construire l'historique des messages pour l'API
+      // Historique : messages précédents en string, dernier en array
       const apiMessages = newMessages.map((m, i) => {
-        if (i === newMessages.length - 1 && messageContent.length > 1) {
-          return { role: m.role, content: messageContent };
+        if (i === newMessages.length - 1 && lastContent.length > 0) {
+          return { role: m.role, content: lastContent };
         }
         return { role: m.role, content: m.content };
       });
@@ -171,11 +184,28 @@ export default function AssistantPage() {
         body: JSON.stringify({ system: SYSTEM_PROMPT, messages: apiMessages }),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData?.error?.message || `Erreur ${response.status}`);
+      }
+
       const data = await response.json();
-      const reply = data.content?.[0]?.text || "Je n'ai pas pu générer une réponse. Veuillez réessayer.";
+
+      if (data.error) {
+        throw new Error(data.error.message || "Erreur API");
+      }
+
+      const reply = data.content?.[0]?.text;
+      if (!reply) throw new Error("Réponse vide");
+
       setMessages(prev => [...prev, { role: "assistant", content: reply }]);
-    } catch {
-      setMessages(prev => [...prev, { role: "assistant", content: "⚠️ Une erreur s'est produite. Vérifiez votre connexion." }]);
+    } catch (err: any) {
+      const msg = err?.message || "Une erreur s'est produite.";
+      setError(msg);
+      setMessages(prev => [...prev, {
+        role: "assistant",
+        content: `⚠️ ${msg.includes("image") || msg.includes("too large") ? "L'image est trop lourde. Essayez une image plus petite." : "Une erreur s'est produite. Vérifiez votre connexion et réessayez."}`,
+      }]);
     }
     setLoading(false);
   };
@@ -222,11 +252,9 @@ export default function AssistantPage() {
                 style={msg.role === "user"
                   ? { background: "#1A3A6C", color: "white", borderTopRightRadius: "4px" }
                   : { background: "white", color: "#1a1a1a", borderTopLeftRadius: "4px" }}>
-                {/* Aperçu image */}
                 {msg.attachmentType === "image" && msg.attachmentPreview && (
                   <img src={msg.attachmentPreview} alt={msg.attachmentName} className="rounded-xl mb-2 max-w-full" style={{ maxHeight: "180px", objectFit: "cover" }} />
                 )}
-                {/* Aperçu PDF */}
                 {msg.attachmentType === "pdf" && (
                   <div className="flex items-center gap-2 mb-2 bg-white/20 rounded-xl px-3 py-2">
                     <span className="text-xl">📄</span>
@@ -280,7 +308,7 @@ export default function AssistantPage() {
       {/* Zone saisie */}
       <div className="shrink-0 px-4 py-3 bg-white border-t border-gray-200 max-w-3xl mx-auto w-full">
 
-        {/* Fichier en attente */}
+        {/* Aperçu fichier en attente */}
         {pendingFile && (
           <div className="flex items-center gap-2 mb-2 bg-blue-50 rounded-xl px-3 py-2">
             {pendingFile.type === "image" && pendingFile.preview
@@ -288,40 +316,33 @@ export default function AssistantPage() {
               : <span className="text-xl">📄</span>
             }
             <span className="text-xs text-sbbs-blue font-medium truncate flex-1">{pendingFile.name}</span>
-            <button onClick={() => setPendingFile(null)} className="text-gray-400 hover:text-red-500 text-sm">✕</button>
+            <button onClick={() => setPendingFile(null)} className="text-gray-400 hover:text-red-500 text-sm ml-1">✕</button>
           </div>
         )}
 
         {/* Boutons pièces jointes */}
         <div className="flex gap-2 mb-2">
           <button onClick={() => imageInputRef.current?.click()}
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100 transition"
-            title="Joindre une image">
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100 transition">
             🖼️ Image
           </button>
           <button onClick={() => pdfInputRef.current?.click()}
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100 transition"
-            title="Joindre un PDF">
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100 transition">
             📄 PDF
           </button>
           <button onClick={handleVoiceRecord}
             className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border transition ${
-              isRecording
-                ? "bg-red-500 border-red-500 text-white animate-pulse"
-                : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
-            }`}
-            title={isRecording ? "Arrêter l'enregistrement" : "Message vocal"}>
+              isRecording ? "bg-red-500 border-red-500 text-white animate-pulse" : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
+            }`}>
             🎤 {isRecording ? "Arrêter" : "Vocal"}
           </button>
         </div>
 
-        {/* Inputs cachés */}
-        <input ref={imageInputRef} type="file" className="hidden" accept="image/*"
+        <input ref={imageInputRef} type="file" className="hidden" accept="image/jpeg,image/png,image/gif,image/webp"
           onChange={handleImageSelect} />
         <input ref={pdfInputRef} type="file" className="hidden" accept=".pdf"
           onChange={handlePdfSelect} />
 
-        {/* Zone texte */}
         <div className="flex gap-2 items-end">
           <textarea value={input}
             onChange={e => setInput(e.target.value)}
