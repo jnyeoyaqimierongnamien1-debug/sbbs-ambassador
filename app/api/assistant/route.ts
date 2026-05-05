@@ -13,18 +13,29 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-5",
-        max_tokens: 1000,
+        max_tokens: 2048,
         system: body.system,
         messages: body.messages,
       }),
     });
 
     const data = await response.json();
-    console.log("Anthropic response:", JSON.stringify(data));
+
+    if (!response.ok) {
+      console.error("Anthropic API error:", JSON.stringify(data));
+      return NextResponse.json(
+        { error: { message: data?.error?.message || `Erreur ${response.status}` } },
+        { status: response.status }
+      );
+    }
+
     return NextResponse.json(data);
 
   } catch (error) {
     console.error("Route error:", error);
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    return NextResponse.json(
+      { error: { message: String(error) } },
+      { status: 500 }
+    );
   }
 }
