@@ -87,7 +87,7 @@ Profil du Président Jean Marc SOUOMI :
 
 02. SBBS Éditions
     Maison d'édition publiant des ouvrages en entrepreneuriat, investissement et développement personnel.
-    Prix d'un livre : 10 000 FCFA (environ 21,09 euros sur Amazon.fr)
+    Prix d'un livre : 10 000 FCFA en Côte d'Ivoire et dans les pays africains | 21,09 dollars sur Amazon (international)
     Livres publiés par Jean Marc SOUOMI :
     - "Des idées qui valent de l'or" — Choisir une activité dans un secteur porteur
     - "Cadre de Vision" — Définir missions, croyances, valeurs, objectifs (mars 2024, 113 pages)
@@ -99,7 +99,7 @@ Profil du Président Jean Marc SOUOMI :
 03. SBBS Consulting
     Accompagnement stratégique des TPME.
     Services : organisation et gestion des petites et moyennes entreprises, accompagnement des familles en organisation économique.
-    Frais d'accompagnement : 600 000 FCFA
+    Tarification : dépend du diagnostic et de l'audit réalisé. Minimum : 600 000 FCFA. Le prix final est établi après évaluation des besoins spécifiques de l'entreprise.
 
 04. SBBS International Language Institute
     Institut certifiant pour l'apprentissage de l'anglais, renforçant l'employabilité et les compétences linguistiques en business.
