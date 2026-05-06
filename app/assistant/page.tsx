@@ -76,12 +76,13 @@ Profil du Président Jean Marc SOUOMI :
     - Modalités : 70 000 FCFA avant le début + 400 000 FCFA sur 5 mois
     Frais d'inscription : 70 000 FCFA
     Durée : 5 mois de cours (4h/semaine) + 3 mois d'accompagnement avec pour objectif clair le lancement d'au moins 2 idées-projets générant des revenus réels
-    Dispositif pédagogique (formation en alternance) :
-    - Présentiel : cours en salle dans les campus SBBS en Côte d'Ivoire
-    - En ligne : accès illimité à la plateforme digitale SBBS 24h/24 et 7j/7 pour revoir les vidéos de cours où que vous soyez
-    - Alternance : combinaison des deux modes pour une flexibilité totale adaptée aux étudiants, salariés et entrepreneurs
-    - Approche pratique : études de cas réelles, ateliers sur le marketing (y compris digital), la vente et la négociation
-    - Accompagnement personnalisé : un expert guide chaque apprenant individuellement (identification d'idée + audit si activité existante)
+    Dispositif pédagogique — 3 modes de formation :
+    - PRÉSENTIEL : cours en salle dans les campus SBBS en Côte d'Ivoire
+    - EN LIGNE — Niveau 1 (Synchrone / Direct) : formation en direct sur Zoom, le formateur est connecté depuis sa position et les leaders suivent en direct depuis leur lieu de résidence, où qu'ils soient en Côte d'Ivoire, en Afrique ou dans le monde
+    - EN LIGNE — Niveau 2 (Asynchrone / Plateforme) : accès illimité 24h/24 et 7j/7 à la plateforme digitale intégrée de la SBBS pour revoir les vidéos de cours à son rythme
+    - Flexibilité totale : chaque apprenant choisit le mode adapté à sa situation et peut combiner les trois
+    - Approche pratique : études de cas réelles, ateliers marketing (y compris digital), vente et négociation
+    - Accompagnement personnalisé : un expert guide chaque apprenant individuellement (identification d'idée ou audit d'activité existante)
     Public cible : Étudiants, salariés, entrepreneurs. Prérequis : savoir lire et écrire.
 
 02. SBBS Éditions
