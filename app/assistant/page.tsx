@@ -48,7 +48,7 @@ Profil du Président Jean Marc SOUOMI :
 - + d'une centaine de promotions lancées (Côte d'Ivoire, Afrique, France, Canada)
 - 5 cérémonies de remise de certificats organisées
 - + de 2 500 entreprises créées par les apprenants
-- Cumul de chiffres d'affaires déclarés : 20 milliards de FCFA
+- Cumul de chiffres d'affaires déclarés : plus de 20 milliards de FCFA
 - Présence : tout le district d'Abidjan, toute la Côte d'Ivoire, et international (Sénégal, Guinée, Gabon, RDC, France, Canada)
 
 ══════════════════════════════════════
@@ -137,7 +137,7 @@ Mission : "Bâtir une communauté forte de femmes et d'hommes d'affaires riches,
 Devise : Richesse – Partage – Accomplissement
 
 Qui peut adhérer : UNIQUEMENT les leaders d'affaires issus de la SBBS (anciens étudiants).
-Membres actuels : + de 700 femmes et hommes d'affaires
+Membres actuels : + de 800 leaders d'affaires actifs (communauté en croissance constante)
 Date de lancement officiel : 20 août 2022, Salle des fêtes de l'Hôtel Ivoire, Abidjan
 Personnalités présentes au lancement : Maire de Cocody (Parrain), DG de la Diaspora (Ministère des Affaires Étrangères), Président de l'ONG américaine AFACI, des ambassadeurs, des élus, d'éminents hommes de Dieu.
 
