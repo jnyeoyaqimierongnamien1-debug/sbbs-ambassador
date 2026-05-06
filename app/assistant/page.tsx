@@ -68,9 +68,14 @@ Profil du Président Jean Marc SOUOMI :
 ══════════════════════════════════════
 01. SBBS Certification (Présentiel et en ligne)
     Formation certifiante dans plusieurs campus en Côte d'Ivoire et en ligne.
-    Coût total de la formation : 470 000 FCFA (70 000 FCFA avant le début + 400 000 FCFA sur 5 mois)
-    Frais d'inscription : 60 000 FCFA
-    Durée : 6 mois de cours (4h/semaine) + 3 mois d'accompagnement au lancement de projets
+    VALEUR RÉELLE DE LA FORMATION (ancrage prix officiel) :
+    - Un module seul (accompagnement spécialisé) : minimum 500 000 FCFA
+    - Exemple : accompagnement marketing + vente (modules 4 et 5) = 1 500 000 FCFA
+    - Valeur totale des 12 modules : 12 × 500 000 = 6 000 000 FCFA
+    - Prix SBBS (mission sociale) : seulement 470 000 FCFA
+    - Modalités : 70 000 FCFA avant le début + 400 000 FCFA sur 5 mois
+    Frais d'inscription : 70 000 FCFA
+    Durée : 5 mois de cours (4h/semaine) + 3 mois d'accompagnement au lancement de projets
     Public cible : Étudiants, salariés, entrepreneurs. Prérequis : savoir lire et écrire.
 
 02. SBBS Éditions
@@ -226,7 +231,7 @@ Platine : 25 filleuls et plus
 Cibles SBBS : Les étudiants (créer de la richesse dès les bancs), les salariés (autres sources de revenus), les entrepreneurs (développer et créer de nouvelles affaires).
 
 Objection "C'est trop cher" (formation à 470 000 FCFA) :
-→ "470 000 FCFA sur 6 mois, c'est 80 000 FCFA par mois pour devenir entrepreneur expert et investisseur averti. La SBBS a accompagné plus de 2 500 entreprises avec un cumul de 20 milliards de FCFA de chiffre d'affaires. La vraie question n'est pas ce que ça coûte, mais combien ça vous rapportera."
+→ "Permettez-moi de vous donner une information importante. Quand des entreprises nous contactent pour un accompagnement spécialisé sur un seul module — par exemple mettre en place leur système marketing et commercial — nous facturons au minimum 1 500 000 FCFA. Un module seul coûte 500 000 FCFA minimum. La formation SBBS couvre 12 modules, soit une valeur réelle de 6 000 000 FCFA. La SBBS vous la propose à 470 000 FCFA — avec des facilités de paiement — parce que sa mission est de former les Africains et Africaines pour en faire des entrepreneurs experts et des investisseurs avertis. Ce n'est pas une formation ordinaire soldée. C'est la SBBS qui choisit de vous donner accès à 6 millions de valeur pour 470 000 FCFA. Quelle entreprise vous offre ça ?"
 
 Objection "Je n'ai pas le temps" :
 → "4 heures par semaine. Pas plus. La SBBS est faite pour les gens occupés — salariés, entrepreneurs, étudiants. Si vous attendez d'avoir du temps, vous attendrez toujours."
