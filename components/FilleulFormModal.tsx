@@ -23,14 +23,18 @@ type FilleulForm = {
   date_inscription: string;
 };
 
+type AmbassadeurOption = { id: string; nom: string; prenom: string; };
+
 type Props = {
   initial?: Partial<FilleulForm>;
-  onSave: (data: FilleulForm) => Promise<void>;
+  onSave: (data: FilleulForm & { ambassadeur_id?: string }) => Promise<void>;
   onCancel: () => void;
   isEditing?: boolean;
+  ambassadeurs?: AmbassadeurOption[];
+  defaultAmbassadeurId?: string;
 };
 
-export default function FilleulFormModal({ initial, onSave, onCancel, isEditing }: Props) {
+export default function FilleulFormModal({ initial, onSave, onCancel, isEditing, ambassadeurs, defaultAmbassadeurId }: Props) {
   const [form, setForm] = useState<FilleulForm>({
     nom: initial?.nom || "",
     prenom: initial?.prenom || "",
@@ -46,6 +50,7 @@ export default function FilleulFormModal({ initial, onSave, onCancel, isEditing 
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [selectedAmbId, setSelectedAmbId] = useState<string>(defaultAmbassadeurId || "");
 
   const set = (key: keyof FilleulForm) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -74,13 +79,17 @@ export default function FilleulFormModal({ initial, onSave, onCancel, isEditing 
       });
     };
 
-  const handleSave = async () => {
+ const handleSave = async () => {
     if (!form.nom.trim() || !form.telephone.trim()) {
       setError("Le nom et le téléphone sont obligatoires.");
       return;
     }
+    if (ambassadeurs && ambassadeurs.length > 0 && !selectedAmbId) {
+      setError("Veuillez sélectionner un ambassadeur.");
+      return;
+    }
     setSaving(true);
-    await onSave(form);
+    await onSave({ ...form, ambassadeur_id: selectedAmbId || undefined });
     setSaving(false);
   };
 
@@ -90,11 +99,25 @@ export default function FilleulFormModal({ initial, onSave, onCancel, isEditing 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6">
-        <h3 className="font-bold text-sbbs-blue text-lg mb-5">
+       <h3 className="font-bold text-sbbs-blue text-lg mb-5">
           {isEditing ? "✏️ Modifier le filleul" : "➕ Ajouter un filleul"}
         </h3>
 
         <div className="space-y-3">
+
+          {/* Sélecteur ambassadeur (mode directeur uniquement) */}
+          {ambassadeurs && ambassadeurs.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Ambassadeur parrain *</label>
+              <select value={selectedAmbId} onChange={e => setSelectedAmbId(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sbbs-blue bg-white">
+                <option value="">— Sélectionner un ambassadeur —</option>
+                {ambassadeurs.map(a => (
+                  <option key={a.id} value={a.id}>{a.prenom} {a.nom}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Infos filleul */}
           <div className="grid grid-cols-2 gap-3">
