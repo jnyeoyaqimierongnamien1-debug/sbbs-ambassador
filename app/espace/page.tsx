@@ -58,6 +58,7 @@ const NAV_ITEMS = [
   { title: "Médiathèque", description: "Formations · Docs", href: "/dashboard/mediatheque", icon: "📁", bg: "linear-gradient(135deg, #0F766E 0%, #14B8A6 100%)" },
   { title: "Scripts WhatsApp", description: "10 messages", href: "/espace/scripts", icon: "📲", bg: "linear-gradient(135deg, #15803D 0%, #25D366 100%)" },
   { title: "Exports & Rapports", description: "Excel · CSV · PDF", href: "/espace/export", icon: "📄", bg: "linear-gradient(135deg, #991B1B 0%, #CC0000 100%)" },
+  { title: "Guide Utilisateur", description: "Toutes les fonctionnalités", href: "/guide", icon: "📖", bg: "linear-gradient(135deg, #4B0082 0%, #7B2FBE 100%)" },
   { title: "Paramètres", description: "Profil · Photo", href: "/parametres", icon: "⚙️", bg: "linear-gradient(135deg, #1F2937 0%, #374151 100%)" },
 ];
 
