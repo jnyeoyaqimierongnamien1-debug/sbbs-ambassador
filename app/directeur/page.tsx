@@ -288,4 +288,63 @@ export default function DirecteurPage() {
                         <p className="text-xs text-gray-500 mt-0.5">📞 {f.telephone}{f.formation ? ` · 📚 ${f.formation}` : ""}{f.montant ? ` · 💰 ${Number(f.montant).toLocaleString()} FCFA` : ""}</p>
                         <p className="text-xs text-gray-400 mt-0.5">Parrain : {amb ? `${amb.prenom} ${amb.nom}` : "-"}</p>
                       </div>
-                  
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Onglet Classement */}
+        {activeTab === "classement" && (
+          <div className="space-y-3">
+            {classement.map((a, i) => (
+              <div key={a.id} className={`card border ${i === 0 ? "border-yellow-300 bg-yellow-50/30" : i === 1 ? "border-gray-300 bg-gray-50/30" : i === 2 ? "border-orange-300 bg-orange-50/30" : "border-gray-100"}`}>
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl w-8 text-center">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`}</span>
+                  <div className="w-10 h-10 rounded-full bg-sbbs-blue flex items-center justify-center text-white font-bold text-sm shrink-0">{a.prenom?.[0]}{a.nom?.[0]}</div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sbbs-blue">{a.prenom} {a.nom}</p>
+                    <p className="text-xs text-gray-500">{a.zone} · {a.branche}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-sbbs-blue text-lg">{a.nb_filleuls}</p>
+                    <p className="text-xs text-gray-400">filleuls</p>
+                    <p className="text-xs text-green-600 font-medium">{a.commissions.toLocaleString()} FCFA</p>
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <div className="w-full bg-gray-100 rounded-full h-1.5">
+                    <div className="bg-sbbs-blue h-1.5 rounded-full transition-all"
+                      style={{ width: `${classement[0]?.nb_filleuls > 0 ? (a.nb_filleuls / classement[0].nb_filleuls) * 100 : 0}%` }} />
+                  </div>
+                </div>
+              </div>
+            ))}
+            {classement.length === 0 && (
+              <div className="card text-center text-gray-400 py-12">
+                <p className="text-5xl mb-3">🏆</p>
+                <p>Aucun ambassadeur dans le réseau.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+      </main>
+
+      {/* Modal ajout filleul */}
+      {showForm && (
+        <FilleulFormModal
+          initial={undefined}
+          onSave={handleSave}
+          onCancel={() => { setShowForm(false); setEditingFilleul(null); }}
+          isEditing={false}
+          ambassadeurs={ambassadeurs}
+          defaultAmbassadeurId={selectedAmb || undefined}
+        />
+      )}
+
+    </div>
+  );
+}
