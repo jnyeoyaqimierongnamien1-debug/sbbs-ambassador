@@ -3,29 +3,39 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-const sections = [
+type StepItem =
+  | { type: 'heading'; text: string }
+  | { type: 'step'; num: string; text: string }
+  | { type: 'bullet'; text: string }
+  | { type: 'tip'; text: string }
+  | { type: 'body'; text: string }
+  | { type: 'table'; rows: string[][] };
+
+type Section = {
+  id: number;
+  icon: string;
+  title: string;
+  tag: string;
+  steps: StepItem[];
+};
+
+const sections: Section[] = [
   {
-    id: 1,
-    icon: '📲',
-    title: "Installation de l'application",
-    tag: 'Débutant',
+    id: 1, icon: '📲', title: "Installation de l'application", tag: 'Débutant',
     steps: [
       { type: 'heading', text: 'Sur Android (Chrome)' },
-      { type: 'step', num: '①', text: "Ouvrez sbbs-app.vercel.app dans Chrome" },
+      { type: 'step', num: '①', text: "Ouvrez sbbs-ambassador.vercel.app dans Chrome" },
       { type: 'step', num: '②', text: "Un bouton violet 'Installer l'app' apparaît en haut de la page de login" },
       { type: 'step', num: '③', text: "Appuyez dessus et confirmez — l'icône SBBS apparaît sur votre écran d'accueil" },
       { type: 'heading', text: 'Sur iPhone (Safari)' },
-      { type: 'step', num: '①', text: "Ouvrez sbbs-app.vercel.app dans Safari" },
+      { type: 'step', num: '①', text: "Ouvrez sbbs-ambassador.vercel.app dans Safari" },
       { type: 'step', num: '②', text: "Appuyez sur le bouton Partager (carré avec flèche)" },
       { type: 'step', num: '③', text: "Sélectionnez 'Sur l'écran d'accueil' — confirmez" },
       { type: 'tip', text: "💡 L'installation PWA vous permet d'accéder à l'app sans saisir l'URL à chaque fois." },
     ],
   },
   {
-    id: 2,
-    icon: '✍️',
-    title: 'Inscription et création de compte',
-    tag: 'Débutant',
+    id: 2, icon: '✍️', title: 'Inscription et création de compte', tag: 'Débutant',
     steps: [
       { type: 'step', num: '①', text: "Sur la page de login, appuyez sur '🤝 Rejoindre le réseau'" },
       { type: 'step', num: '②', text: "Remplissez le formulaire : nom, prénom, email, téléphone, mot de passe" },
@@ -35,10 +45,7 @@ const sections = [
     ],
   },
   {
-    id: 3,
-    icon: '🔐',
-    title: 'Connexion et navigation',
-    tag: 'Débutant',
+    id: 3, icon: '🔐', title: 'Connexion et navigation', tag: 'Débutant',
     steps: [
       { type: 'step', num: '①', text: "Saisissez votre email et mot de passe sur la page de login" },
       { type: 'step', num: '②', text: "Appuyez sur 'Se connecter' — vous êtes redirigé vers votre espace" },
@@ -49,10 +56,7 @@ const sections = [
     ],
   },
   {
-    id: 4,
-    icon: '🏠',
-    title: 'Mon Espace Ambassadeur',
-    tag: 'Débutant',
+    id: 4, icon: '🏠', title: 'Mon Espace Ambassadeur', tag: 'Débutant',
     steps: [
       { type: 'body', text: "Votre tableau de bord personnel, accessible dès la connexion." },
       { type: 'heading', text: 'Ce que vous y trouvez' },
@@ -63,10 +67,7 @@ const sections = [
     ],
   },
   {
-    id: 5,
-    icon: '➕',
-    title: 'Ajouter un filleul',
-    tag: 'Essentiel',
+    id: 5, icon: '➕', title: 'Ajouter un filleul', tag: 'Essentiel',
     steps: [
       { type: 'body', text: "C'est l'action principale de l'ambassadeur. Chaque filleul ajouté génère une commission." },
       { type: 'step', num: '①', text: "Dans Mon Espace, appuyez sur '+ Ajouter un filleul'" },
@@ -78,10 +79,7 @@ const sections = [
     ],
   },
   {
-    id: 6,
-    icon: '💰',
-    title: 'Comprendre les commissions',
-    tag: 'Essentiel',
+    id: 6, icon: '💰', title: 'Comprendre les commissions', tag: 'Essentiel',
     steps: [
       { type: 'table', rows: [
         ['Branche', 'À Chaud', 'Assisté'],
@@ -94,10 +92,7 @@ const sections = [
     ],
   },
   {
-    id: 7,
-    icon: '💬',
-    title: 'La messagerie interne',
-    tag: 'Confirmé',
+    id: 7, icon: '💬', title: 'La messagerie interne', tag: 'Confirmé',
     steps: [
       { type: 'bullet', text: "L'icône 💬 bleue en bas à droite indique les nouveaux messages" },
       { type: 'bullet', text: "Un badge rouge affiche le nombre de messages non lus" },
@@ -106,10 +101,7 @@ const sections = [
     ],
   },
   {
-    id: 8,
-    icon: '🤖',
-    title: 'L\'assistant ALEX',
-    tag: 'Essentiel',
+    id: 8, icon: '🤖', title: "L'assistant ALEX", tag: 'Essentiel',
     steps: [
       { type: 'body', text: "ALEX est votre expert SBBS disponible 24h/24, 7j/7. Il connaît toutes les branches, commissions et argumentaires." },
       { type: 'heading', text: 'Questions utiles à poser à ALEX' },
@@ -121,10 +113,7 @@ const sections = [
     ],
   },
   {
-    id: 9,
-    icon: '🏫',
-    title: 'Espace Directeur',
-    tag: 'Directeur',
+    id: 9, icon: '🏫', title: 'Espace Directeur', tag: 'Directeur',
     steps: [
       { type: 'body', text: "Réservé aux directeurs validés. Accessible via 'Espace Directeur' sur la page de login." },
       { type: 'bullet', text: "Vue globale de tous les ambassadeurs et leurs filleuls" },
@@ -134,10 +123,7 @@ const sections = [
     ],
   },
   {
-    id: 10,
-    icon: '⚙️',
-    title: 'Paramètres et compte',
-    tag: 'Confirmé',
+    id: 10, icon: '⚙️', title: 'Paramètres et compte', tag: 'Confirmé',
     steps: [
       { type: 'step', num: '①', text: "Accédez aux paramètres depuis le menu de navigation" },
       { type: 'step', num: '②', text: "Modifiez votre profil : nom, photo, informations de contact" },
@@ -146,19 +132,13 @@ const sections = [
     ],
   },
   {
-    id: 11,
-    icon: '📋',
-    title: "Conditions d'utilisation",
-    tag: 'Info',
+    id: 11, icon: '📋', title: "Conditions d'utilisation", tag: 'Info',
     steps: [
-      { type: 'body', text: "Les CGU sont accessibles directement dans l'application via le lien en bas de la page de login, ou en naviguant vers /cgu." },
+      { type: 'body', text: "Les CGU sont accessibles via le lien en bas de la page de login, ou en naviguant vers /cgu." },
     ],
   },
   {
-    id: 12,
-    icon: '📞',
-    title: 'Support et contacts',
-    tag: 'Info',
+    id: 12, icon: '📞', title: 'Support et contacts', tag: 'Info',
     steps: [
       { type: 'bullet', text: "Messagerie intégrée : contactez directement la direction commerciale SBBS" },
       { type: 'bullet', text: "Tél : +225 07 09 20 61 81 / 07 08 76 18 40" },
@@ -184,15 +164,54 @@ export default function GuideUtilisateurPage() {
   const filters = ['Tous', 'Débutant', 'Essentiel', 'Confirmé', 'Directeur'];
   const filtered = filter === 'Tous' ? sections : sections.filter(s => s.tag === filter);
 
+  const renderStep = (item: StepItem, i: number) => {
+    switch (item.type) {
+      case 'heading':
+        return <p key={i} className="text-xs font-bold mt-2" style={{ color: '#2563EB' }}>{item.text}</p>;
+      case 'step':
+        return (
+          <div key={i} className="flex gap-2">
+            <span className="text-xs font-bold flex-shrink-0 mt-0.5" style={{ color: '#CC0000' }}>{item.num}</span>
+            <p className="text-sm text-gray-700 leading-relaxed">{item.text}</p>
+          </div>
+        );
+      case 'bullet':
+        return <p key={i} className="text-sm text-gray-600 pl-3 leading-relaxed">• {item.text}</p>;
+      case 'tip':
+        return <p key={i} className="text-xs italic pl-3 leading-relaxed" style={{ color: '#2563EB' }}>{item.text}</p>;
+      case 'body':
+        return <p key={i} className="text-sm text-gray-700 leading-relaxed">{item.text}</p>;
+      case 'table':
+        return (
+          <div key={i} className="overflow-x-auto mt-2">
+            <table className="w-full text-xs border-collapse">
+              <thead>
+                <tr style={{ background: '#1A3A6C' }}>
+                  {item.rows[0].map((h, j) => (
+                    <th key={j} className="text-white px-2 py-2 text-left font-semibold">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {item.rows.slice(1).map((row, j) => (
+                  <tr key={j} style={{ background: j % 2 === 0 ? '#F5F7FA' : 'white' }}>
+                    {row.map((cell, k) => (
+                      <td key={k} className="px-2 py-2 text-gray-700">{cell}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+    }
+  };
+
   return (
     <div className="min-h-screen pb-10" style={{ background: '#F0F2F5' }}>
-
-      {/* Header */}
       <header className="px-4 py-3 flex items-center gap-3 shadow-lg sticky top-0 z-10"
         style={{ background: 'linear-gradient(135deg, #1A3A6C 0%, #2563EB 100%)' }}>
-        <button onClick={() => router.back()} className="text-blue-200 hover:text-white text-sm transition">
-          ← Retour
-        </button>
+        <button onClick={() => router.back()} className="text-blue-200 hover:text-white text-sm transition">← Retour</button>
         <div className="flex-1">
           <h1 className="font-bold text-white text-sm">Guide Utilisateur</h1>
           <p className="text-xs text-blue-200">SBBS Ambassador · Toutes les fonctionnalités</p>
@@ -200,8 +219,6 @@ export default function GuideUtilisateurPage() {
       </header>
 
       <div className="max-w-2xl mx-auto px-4 pt-6">
-
-        {/* Intro */}
         <div className="rounded-2xl p-5 mb-5 shadow-sm"
           style={{ background: 'linear-gradient(135deg, #1A3A6C, #2563EB)' }}>
           <div className="flex items-center gap-3 mb-2">
@@ -218,7 +235,6 @@ export default function GuideUtilisateurPage() {
           </p>
         </div>
 
-        {/* Filtres */}
         <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
           {filters.map(f => (
             <button key={f} onClick={() => setFilter(f)}
@@ -231,7 +247,6 @@ export default function GuideUtilisateurPage() {
           ))}
         </div>
 
-        {/* Sections */}
         <div className="space-y-3">
           {filtered.map(section => {
             const tagStyle = tagColors[section.tag] || tagColors['Info'];
@@ -259,49 +274,7 @@ export default function GuideUtilisateurPage() {
 
                 {openSection === section.id && (
                   <div className="px-4 pb-4 border-t border-gray-100 pt-3 space-y-2">
-                    {section.steps.map((item, i) => {
-                      if (item.type === 'heading') return (
-                        <p key={i} className="text-xs font-bold mt-2" style={{ color: '#2563EB' }}>{item.text}</p>
-                      );
-                      if (item.type === 'step') return (
-                        <div key={i} className="flex gap-2">
-                          <span className="text-xs font-bold flex-shrink-0 mt-0.5" style={{ color: '#CC0000' }}>{item.num}</span>
-                          <p className="text-sm text-gray-700 leading-relaxed">{item.text}</p>
-                        </div>
-                      );
-                      if (item.type === 'bullet') return (
-                        <p key={i} className="text-sm text-gray-600 pl-3 leading-relaxed">• {item.text}</p>
-                      );
-                      if (item.type === 'tip') return (
-                        <p key={i} className="text-xs italic pl-3 leading-relaxed" style={{ color: '#2563EB' }}>{item.text}</p>
-                      );
-                      if (item.type === 'body') return (
-                        <p key={i} className="text-sm text-gray-700 leading-relaxed">{item.text}</p>
-                      );
-                      if (item.type === 'table' && item.rows) return (
-                        <div key={i} className="overflow-x-auto mt-2">
-                          <table className="w-full text-xs border-collapse">
-                            <thead>
-                              <tr style={{ background: '#1A3A6C' }}>
-                                {item.rows[0].map((h: string, j: number) => (
-                                  <th key={j} className="text-white px-2 py-2 text-left font-semibold">{h}</th>
-                                ))}
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {item.rows.slice(1).map((row: string[], j: number) => (
-                                <tr key={j} style={{ background: j % 2 === 0 ? '#F5F7FA' : 'white' }}>
-                                  {row.map((cell: string, k: number) => (
-                                    <td key={k} className="px-2 py-2 text-gray-700">{cell}</td>
-                                  ))}
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      );
-                      return null;
-                    })}
+                    {section.steps.map((item, i) => renderStep(item, i))}
                   </div>
                 )}
               </div>
