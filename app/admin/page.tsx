@@ -272,14 +272,14 @@ export default function AdminPage() {
 
         {/* Onglets */}
         <div className="flex gap-2 mb-5 overflow-x-auto pb-1">
-          {([
-            { key: "overview", label: "Vue globale", emoji: "📊" },
-            { key: "ambassadeurs", label: "Ambassadeurs", emoji: "👥" },
-            { key: "directeurs", label: "Directeurs", emoji: "🏫" },
-            { key: "filleuls", label: "Filleuls", emoji: "🎓" },
+         {([
+            { key: "overview", label: "Vue globale", emoji: "📊", alert: 0 },
+            { key: "ambassadeurs", label: "Ambassadeurs", emoji: "👥", alert: 0 },
+            { key: "directeurs", label: "Directeurs", emoji: "🏫", alert: 0 },
+            { key: "filleuls", label: "Filleuls", emoji: "🎓", alert: 0 },
             { key: "comptes", label: "Comptes", emoji: "⚙️", alert: ambsEnAttente + dirsEnAttente },
           ] as const).map(tab => (
-            <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+            <button key={tab.key} onClick={() => setActiveTab(tab.key as any)}
               className={`relative text-sm px-4 py-2 rounded-xl font-medium transition flex-shrink-0 ${activeTab === tab.key ? "bg-sbbs-blue text-white shadow-sm" : "bg-white text-gray-600 border border-gray-200 hover:border-sbbs-blue"}`}>
               {tab.emoji} {tab.label}
               {tab.alert > 0 && (
