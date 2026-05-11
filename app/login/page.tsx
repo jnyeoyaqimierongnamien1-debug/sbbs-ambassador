@@ -210,9 +210,17 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <p className="text-center text-xs text-blue-200 mt-4">
-          © {new Date().getFullYear()} SBBS — Groupe Intelligent Partnership
-        </p>
+        <div className="text-center mt-4 space-y-1">
+  <p className="text-xs text-blue-200">
+    © {new Date().getFullYear()} SBBS — Groupe Intelligent Partnership
+  </p>
+  <button
+    onClick={() => router.push("/cgu")}
+    className="text-xs underline transition"
+    style={{ color: "#C9A84C" }}>
+    Conditions Générales d'Utilisation
+  </button>
+</div>
       </div>
     </div>
   );
