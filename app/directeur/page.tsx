@@ -209,7 +209,7 @@ export default function DirecteurPage() {
               className="group relative flex items-center gap-2.5 px-3 py-3 rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 text-left overflow-hidden border-2"
               style={{
   background: tab.bg,
-  opacity: activeTab === tab.key ? 1 : 0.45,
+  opacity: activeTab === tab.key ? 1 : 1,
   borderColor: "transparent",
 }}>
               <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity rounded-2xl" />
