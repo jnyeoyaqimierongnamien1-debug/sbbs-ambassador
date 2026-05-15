@@ -208,9 +208,10 @@ export default function DirecteurPage() {
             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
               className="group relative flex items-center gap-2.5 px-3 py-3 rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 text-left overflow-hidden border-2"
               style={{
-                background: activeTab === tab.key ? tab.bg : "white",
-                borderColor: activeTab === tab.key ? "transparent" : "#E5E7EB",
-              }}>
+  background: tab.bg,
+  opacity: activeTab === tab.key ? 1 : 0.45,
+  borderColor: "transparent",
+}}>
               <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity rounded-2xl" />
               <span className="text-lg shrink-0">{tab.emoji}</span>
               <p className={`font-bold text-xs leading-tight ${activeTab === tab.key ? "text-white" : "text-gray-600"}`}>
