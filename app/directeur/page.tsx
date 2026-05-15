@@ -68,9 +68,9 @@ export default function DirecteurPage() {
     const ambIds = (ambs || []).map((a: any) => a.id);
 
     // Le directeur est-il aussi ambassadeur dans une autre branche ?
-    const { data: monAmb } = await supabase
-      .from("ambassadeurs").select("id")
-      .eq("user_id", user.id).single();
+   const { data: monAmb } = await supabase
+  .from("ambassadeurs").select("id")
+  .eq("email", dir.email).single();
 
     let monProppreAmbId: string | null = null;
     if (monAmb && !ambIds.includes(monAmb.id)) {
