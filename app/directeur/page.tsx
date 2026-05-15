@@ -60,9 +60,9 @@ export default function DirecteurPage() {
     setDirecteur(dir);
 
     // Ambassadeurs de SA branche uniquement
-    const { data: ambs } = await supabase
-      .from("ambassadeurs").select("*")
-      .eq("branche", dir.branche).order("nom");
+   const { data: ambs } = await supabase
+  .from("ambassadeurs").select("*")
+  .ilike("branche", dir.branche).order("nom");
     setAmbassadeurs(ambs || []);
 
     const ambIds = (ambs || []).map((a: any) => a.id);
