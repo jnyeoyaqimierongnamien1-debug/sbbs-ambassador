@@ -291,7 +291,6 @@ export default function AdminPage() {
         </div>
 
         {/* ── OVERVIEW ── */}
-{/* ── OVERVIEW ── */}
 {activeTab === "overview" && (
   <div className="space-y-5">
 
@@ -390,7 +389,7 @@ export default function AdminPage() {
       <h3 className="font-bold text-sbbs-blue mb-4">🏫 Répartition par branche</h3>
       <div className="space-y-2">
         {["SBBS CERTIFICATION", "CHLA", "SBBS CONSULTING", "SBBS EDITIONS"].map(branche => {
-          const ambsBranche = ambassadeurs.filter(a => a.branche.toUpperCase().includes(branche.split(" ").pop() || "")).length;
+         const ambsBranche = ambassadeurs.filter(a => (a.branche || "").toUpperCase().includes(branche.split(" ").pop() || "")).length;
           const fillBranche = filleuls.filter(f => (f.branche_filleul || "").toUpperCase().includes(branche.split(" ").pop() || "")).length;
           const gainsBranche = filleuls.filter(f => (f.branche_filleul || "").toUpperCase().includes(branche.split(" ").pop() || "") && f.statut === "Payé").reduce((s, f) => s + (Number(f.montant)||0), 0);
           return (
