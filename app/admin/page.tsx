@@ -291,39 +291,123 @@ export default function AdminPage() {
         </div>
 
         {/* ── OVERVIEW ── */}
-        {activeTab === "overview" && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="card">
-                <h3 className="font-bold text-sbbs-blue mb-3">📈 Réseau global</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between"><span className="text-gray-500">Total ambassadeurs</span><span className="font-bold">{ambassadeurs.length}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-500">Total directeurs</span><span className="font-bold">{directeurs.length}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-500">Total filleuls</span><span className="font-bold">{filleuls.length}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-500">Filleuls payés</span><span className="font-bold text-green-600">{totalPayes}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-500">Taux conversion</span><span className="font-bold text-sbbs-blue">{totalFilleulsActifs > 0 ? Math.round((totalPayes / totalFilleulsActifs) * 100) : 0}%</span></div>
-                  <div className="flex justify-between"><span className="text-gray-500">Commissions totales</span><span className="font-bold text-green-600">{totalCommissions.toLocaleString()} FCFA</span></div>
+{/* ── OVERVIEW ── */}
+{activeTab === "overview" && (
+  <div className="space-y-5">
+
+    {/* Résumé financier */}
+    <div className="rounded-2xl p-5 shadow-sm text-white"
+      style={{ background: "linear-gradient(135deg, #0F0C29, #302B63)" }}>
+      <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#C9A84C" }}>
+        Résumé Financier Global
+      </p>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <p className="text-3xl font-bold text-white">{totalCommissions.toLocaleString()}</p>
+          <p className="text-xs text-white/60 mt-0.5">FCFA commissions payées</p>
+        </div>
+        <div>
+          <p className="text-3xl font-bold" style={{ color: "#C9A84C" }}>{totalAttente.toLocaleString()}</p>
+          <p className="text-xs text-white/60 mt-0.5">FCFA en attente</p>
+        </div>
+      </div>
+      <div className="mt-4 pt-4 border-t border-white/10 grid grid-cols-3 gap-3 text-center">
+        <div>
+          <p className="text-lg font-bold text-white">{ambassadeurs.length}</p>
+          <p className="text-xs text-white/50">Ambassadeurs</p>
+        </div>
+        <div>
+          <p className="text-lg font-bold text-white">{filleuls.length}</p>
+          <p className="text-xs text-white/50">Filleuls total</p>
+        </div>
+        <div>
+          <p className="text-lg font-bold text-green-400">{totalFilleulsActifs > 0 ? Math.round((totalPayes / totalFilleulsActifs) * 100) : 0}%</p>
+          <p className="text-xs text-white/50">Taux conversion</p>
+        </div>
+      </div>
+    </div>
+
+    {/* Alerte si validations en attente */}
+    {totalNotifications > 0 && (
+      <button onClick={() => setActiveTab("comptes")}
+        className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl border-2 border-orange-300 bg-orange-50 hover:bg-orange-100 transition text-left">
+        <span className="text-2xl">⚠️</span>
+        <div className="flex-1">
+          <p className="font-bold text-orange-700 text-sm">{totalNotifications} validation(s) en attente</p>
+          <p className="text-xs text-orange-500">
+            {filleuslEnAttentePaiement.length > 0 && `${filleuslEnAttentePaiement.length} paiement(s) filleuls · `}
+            {ambsEnAttente > 0 && `${ambsEnAttente} ambassadeur(s) · `}
+            {dirsEnAttente > 0 && `${dirsEnAttente} directeur(s)`}
+          </p>
+        </div>
+        <span className="text-orange-400 text-lg">→</span>
+      </button>
+    )}
+
+    {/* Top Ambassadeurs */}
+    <div className="card">
+      <h3 className="font-bold text-sbbs-blue mb-4">🏆 Classement Ambassadeurs</h3>
+      <div className="space-y-3">
+        {ambassadeurs.map(a => ({
+          ...a,
+          nb: filleuls.filter(f => f.ambassadeur_id === a.id && f.statut !== "Annulé").length,
+          payes: filleuls.filter(f => f.ambassadeur_id === a.id && f.statut === "Payé").length,
+          gains: filleuls.filter(f => f.ambassadeur_id === a.id && f.statut === "Payé").reduce((s, f) => s + (Number(f.montant)||0), 0),
+        })).sort((a, b) => b.nb - a.nb).slice(0, 7).map((a, i) => {
+          const max = ambassadeurs.map(x => filleuls.filter(f => f.ambassadeur_id === x.id && f.statut !== "Annulé").length).reduce((m, v) => Math.max(m, v), 1);
+          const pct = Math.round((a.nb / max) * 100);
+          return (
+            <div key={a.id}>
+              <div className="flex items-center gap-3 mb-1">
+                <span className="text-base w-6 shrink-0">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i+1}`}</span>
+                <div className="w-8 h-8 rounded-full bg-sbbs-blue flex items-center justify-center text-white text-xs font-bold shrink-0">
+                  {a.prenom?.[0]}{a.nom?.[0]}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold truncate">{a.prenom} {a.nom}</p>
+                  <p className="text-xs text-gray-400">{a.branche}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-sm font-bold text-sbbs-blue">{a.nb} filleuls</p>
+                  <p className="text-xs text-green-600 font-medium">{a.gains.toLocaleString()} FCFA</p>
                 </div>
               </div>
-              <div className="card">
-                <h3 className="font-bold text-sbbs-blue mb-3">🏆 Top 5 Ambassadeurs</h3>
-                {ambassadeurs.map(a => ({
-                  ...a, nb: filleuls.filter(f => f.ambassadeur_id === a.id && f.statut !== "Annulé").length,
-                  gains: filleuls.filter(f => f.ambassadeur_id === a.id && f.statut === "Payé").reduce((s, f) => s + (Number(f.montant) || 0), 0)
-                })).sort((a, b) => b.nb - a.nb).slice(0, 5).map((a, i) => (
-                  <div key={a.id} className="flex items-center gap-2 py-1.5 border-b border-gray-50 last:border-0">
-                    <span className="text-sm w-5">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i+1}`}</span>
-                    <span className="text-sm flex-1 truncate">{a.prenom} {a.nom}</span>
-                    <div className="text-right">
-                      <span className="text-xs font-bold text-sbbs-blue block">{a.nb} filleuls</span>
-                      <span className="text-xs text-green-600">{a.gains.toLocaleString()} FCFA</span>
-                    </div>
-                  </div>
-                ))}
+              <div className="ml-14 flex items-center gap-2">
+                <div className="flex-1 bg-gray-100 rounded-full h-1.5">
+                  <div className="h-1.5 rounded-full transition-all"
+                    style={{ width: `${pct}%`, background: i === 0 ? "#C9A84C" : i === 1 ? "#94A3B8" : i === 2 ? "#CD7C3E" : "#1A3A6C" }} />
+                </div>
+                <span className="text-xs text-gray-400 w-8 text-right">{pct}%</span>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })}
+      </div>
+    </div>
+
+    {/* Répartition par branche */}
+    <div className="card">
+      <h3 className="font-bold text-sbbs-blue mb-4">🏫 Répartition par branche</h3>
+      <div className="space-y-2">
+        {["SBBS CERTIFICATION", "CHLA", "SBBS CONSULTING", "SBBS EDITIONS"].map(branche => {
+          const ambsBranche = ambassadeurs.filter(a => a.branche.toUpperCase().includes(branche.split(" ").pop() || "")).length;
+          const fillBranche = filleuls.filter(f => (f.branche_filleul || "").toUpperCase().includes(branche.split(" ").pop() || "")).length;
+          const gainsBranche = filleuls.filter(f => (f.branche_filleul || "").toUpperCase().includes(branche.split(" ").pop() || "") && f.statut === "Payé").reduce((s, f) => s + (Number(f.montant)||0), 0);
+          return (
+            <div key={branche} className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gray-50">
+              <div className="flex-1">
+                <p className="text-xs font-bold text-gray-700">{branche}</p>
+                <p className="text-xs text-gray-400">{ambsBranche} ambassadeur(s) · {fillBranche} filleul(s)</p>
+              </div>
+              <p className="text-sm font-bold text-green-600">{gainsBranche.toLocaleString()} FCFA</p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+
+  </div>
+)}
 
         {/* ── AMBASSADEURS ── */}
         {activeTab === "ambassadeurs" && (
