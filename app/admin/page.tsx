@@ -451,8 +451,27 @@ export default function AdminPage() {
                         <p className="text-xs text-gray-400">Parrain : {amb ? `${amb.prenom} ${amb.nom}` : "-"}{f.date_inscription ? ` · 📅 ${f.date_inscription}` : ""}</p>
                       </div>
                     </div>
-                    <div className="flex gap-2 mt-3 flex-wrap">
-                      <select value={f.statut}
+                    <div className="flex gap-2 mt-3 flex-wrap items-center">
+  {f.montant ? (
+    <span className="text-xs font-bold text-green-700 bg-green-50 px-2 py-1 rounded-lg">
+      💰 {Number(f.montant).toLocaleString()} FCFA
+    </span>
+  ) : (
+    <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded-lg">
+      💰 Commission non définie
+    </span>
+  )}
+  <button
+    onClick={() => {
+      const val = prompt("Montant commission (FCFA) :", String(f.montant || ""));
+      if (val !== null) {
+        supabase.from("filleuls").update({ montant: Number(val) }).eq("id", f.id).then(() => fetchData());
+      }
+    }}
+    className="text-xs px-3 py-1.5 rounded-xl bg-green-50 text-green-700 font-medium hover:bg-green-100 transition">
+    ✏️ Modifier commission
+  </button>
+  <select value={f.statut}
                         onChange={e => handleUpdateStatutFilleul(f.id, e.target.value)}
                         className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-sbbs-blue">
                         {["En attente", "Inscrit", "Payé", "Annulé"].map(s => <option key={s} value={s}>{s}</option>)}
