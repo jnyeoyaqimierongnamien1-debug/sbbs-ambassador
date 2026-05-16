@@ -9,53 +9,54 @@ import FilleulFormModal from "@/components/FilleulFormModal";
 const ADMIN_SECRET = "SBBS@2026#Admin";
 // ────────────────────────────────────────────────────────────
 
+// ─── CALCUL AUTO COMMISSION ─────────────────────────────────
+function calculerCommissionAuto(branche: string, type: string): number {
+  const b = (branche || "").toLowerCase();
+  const t = (type || "").toLowerCase();
+  if (b.includes("certification")) return t.includes("chaud") ? 30000 : 12000;
+  if (b.includes("chla"))         return 10000;
+  if (b.includes("dition") || b.includes("edition")) return 1000;
+  if (b.includes("consulting"))   return 60000;
+  return 0;
+}
+// ────────────────────────────────────────────────────────────
+
 type Ambassadeur = { id: string; code: string; nom: string; prenom: string; telephone: string; email: string; zone: string; branche: string; niveau: string; statut: string; user_id: string; };
-type Directeur = { id: string; nom: string; prenom: string; telephone: string; email: string; branche: string; zone: string; fonction: string; statut: string; user_id: string; };
-type Filleul = { id: string; ambassadeur_id: string; nom: string; prenom: string; telephone: string; email: string; formation: string; montant: number; statut: string; date_inscription: string; created_at: string; type_parrainage: string; branche_filleul: string; };
+type Directeur   = { id: string; nom: string; prenom: string; telephone: string; email: string; branche: string; zone: string; fonction: string; statut: string; user_id: string; };
+type Filleul     = { id: string; ambassadeur_id: string; nom: string; prenom: string; telephone: string; email: string; formation: string; montant: number; statut: string; date_inscription: string; created_at: string; type_parrainage: string; branche_filleul: string; };
 
 const statutColors: Record<string, string> = {
   "En attente": "bg-yellow-100 text-yellow-800",
-  "Inscrit": "bg-blue-100 text-blue-800",
-  "Payé": "bg-green-100 text-green-800",
-  "Annulé": "bg-red-100 text-red-800",
-  "actif": "bg-green-100 text-green-800",
-  "Actif": "bg-green-100 text-green-800",
-  "suspendu": "bg-red-100 text-red-800",
-  "Suspendu": "bg-red-100 text-red-800",
+  "Inscrit":    "bg-blue-100 text-blue-800",
+  "Payé":       "bg-green-100 text-green-800",
+  "Annulé":     "bg-red-100 text-red-800",
+  "actif":      "bg-green-100 text-green-800",
+  "Actif":      "bg-green-100 text-green-800",
+  "suspendu":   "bg-red-100 text-red-800",
+  "Suspendu":   "bg-red-100 text-red-800",
 };
 
 export default function AdminPage() {
-  // ── Auth admin ──
-  const [code, setCode] = useState("");
-  const [authenticated, setAuthenticated] = useState(false);
-  const [codeError, setCodeError] = useState(false);
-  const [showCode, setShowCode] = useState(false);
-
-  // ── Data ──
-  const [ambassadeurs, setAmbassadeurs] = useState<Ambassadeur[]>([]);
-  const [directeurs, setDirecteurs] = useState<Directeur[]>([]);
-  const [filleuls, setFilleuls] = useState<Filleul[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  // ── UI ──
-  const [activeTab, setActiveTab] = useState<"overview" | "ambassadeurs" | "directeurs" | "filleuls" | "comptes">("overview");
-  const [selectedAmb, setSelectedAmb] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
+  const [code, setCode]                     = useState("");
+  const [authenticated, setAuthenticated]   = useState(false);
+  const [codeError, setCodeError]           = useState(false);
+  const [showCode, setShowCode]             = useState(false);
+  const [ambassadeurs, setAmbassadeurs]     = useState<Ambassadeur[]>([]);
+  const [directeurs, setDirecteurs]         = useState<Directeur[]>([]);
+  const [filleuls, setFilleuls]             = useState<Filleul[]>([]);
+  const [loading, setLoading]               = useState(false);
+  const [activeTab, setActiveTab]           = useState<"overview"|"ambassadeurs"|"directeurs"|"filleuls"|"comptes">("overview");
+  const [selectedAmb, setSelectedAmb]       = useState<string | null>(null);
+  const [showForm, setShowForm]             = useState(false);
   const [editingFilleul, setEditingFilleul] = useState<Filleul | null>(null);
-  const [search, setSearch] = useState("");
+  const [search, setSearch]                 = useState("");
 
-  const router = useRouter();
+  const router   = useRouter();
   const supabase = createClient();
 
   const handleCodeSubmit = () => {
-    if (code === ADMIN_SECRET) {
-      setAuthenticated(true);
-      setCodeError(false);
-      fetchData();
-    } else {
-      setCodeError(true);
-      setCode("");
-    }
+    if (code === ADMIN_SECRET) { setAuthenticated(true); setCodeError(false); fetchData(); }
+    else { setCodeError(true); setCode(""); }
   };
 
   const fetchData = async () => {
@@ -71,31 +72,44 @@ export default function AdminPage() {
     setLoading(false);
   };
 
-  // ── Filleuls CRUD ──
+  // ── Valider paiement + commission auto ──────────────────
+  const handleValiderPaiement = async (f: Filleul) => {
+    const commission = calculerCommissionAuto(f.branche_filleul || f.formation, f.type_parrainage);
+    const montantFinal = commission > 0 ? commission : (f.montant || 0);
+    const { error } = await supabase.from("filleuls")
+      .update({ statut: "Payé", montant: montantFinal })
+      .eq("id", f.id);
+    if (error) { alert("Erreur : " + error.message); return; }
+    fetchData();
+  };
+
+  // ── Modifier statut avec commission auto si Payé ────────
+  const handleUpdateStatutFilleul = async (id: string, statut: string, filleul: Filleul) => {
+    if (statut === "Payé") {
+      await handleValiderPaiement(filleul);
+    } else {
+      await supabase.from("filleuls").update({ statut }).eq("id", id);
+      fetchData();
+    }
+  };
+
   const handleSaveFilleul = async (form: any) => {
     const payload = {
-      nom: form.nom.trim(),
-      prenom: form.prenom.trim(),
-      telephone: form.telephone.trim(),
-      email: form.email?.trim() || null,
-      formation: form.formation?.trim() || null,
-      branche_filleul: form.branche_filleul || null,
-      type_parrainage: form.type_parrainage,
+      nom: form.nom.trim(), prenom: form.prenom.trim(), telephone: form.telephone.trim(),
+      email: form.email?.trim() || null, formation: form.formation?.trim() || null,
+      branche_filleul: form.branche_filleul || null, type_parrainage: form.type_parrainage,
       montant: form.montant ? Number(form.montant) : null,
-      statut: form.statut,
-      date_inscription: form.date_inscription || null,
+      statut: form.statut, date_inscription: form.date_inscription || null,
       ambassadeur_id: form.ambassadeur_id,
     };
     if (editingFilleul) {
       const { error } = await supabase.from("filleuls").update(payload).eq("id", editingFilleul.id);
-      if (error) { alert("Erreur modification : " + error.message); return; }
+      if (error) { alert("Erreur : " + error.message); return; }
     } else {
       const { error } = await supabase.from("filleuls").insert(payload);
-      if (error) { alert("Erreur ajout : " + error.message); return; }
+      if (error) { alert("Erreur : " + error.message); return; }
     }
-    setShowForm(false);
-    setEditingFilleul(null);
-    fetchData();
+    setShowForm(false); setEditingFilleul(null); fetchData();
   };
 
   const handleDeleteFilleul = async (id: string) => {
@@ -104,52 +118,46 @@ export default function AdminPage() {
     fetchData();
   };
 
-  const handleUpdateStatutFilleul = async (id: string, statut: string) => {
-    await supabase.from("filleuls").update({ statut }).eq("id", id);
-    fetchData();
-  };
-
-  // ── Comptes Ambassadeurs ──
   const handleUpdateStatutAmb = async (id: string, statut: string) => {
     await supabase.from("ambassadeurs").update({ statut }).eq("id", id);
     fetchData();
   };
 
   const handleDeleteAmb = async (id: string) => {
-    if (!confirm("Supprimer définitivement cet ambassadeur et tous ses filleuls ?")) return;
+    if (!confirm("Supprimer cet ambassadeur et tous ses filleuls ?")) return;
     await supabase.from("filleuls").delete().eq("ambassadeur_id", id);
     await supabase.from("ambassadeurs").delete().eq("id", id);
     fetchData();
   };
 
-  // ── Comptes Directeurs ──
   const handleUpdateStatutDir = async (id: string, statut: string) => {
     await supabase.from("directeurs").update({ statut }).eq("id", id);
     fetchData();
   };
 
   const handleDeleteDir = async (id: string) => {
-    if (!confirm("Supprimer définitivement ce directeur ?")) return;
+    if (!confirm("Supprimer ce directeur ?")) return;
     await supabase.from("directeurs").delete().eq("id", id);
     fetchData();
   };
 
-  // ── Stats globales ──
-  const totalFilleulsActifs = filleuls.filter(f => f.statut !== "Annulé").length;
-  const totalPayes = filleuls.filter(f => f.statut === "Payé").length;
-  const totalCommissions = filleuls.filter(f => f.statut === "Payé").reduce((s, f) => s + (Number(f.montant) || 0), 0);
-  const totalAttente = filleuls.filter(f => ["En attente", "Inscrit"].includes(f.statut)).reduce((s, f) => s + (Number(f.montant) || 0), 0);
-  const ambsEnAttente = ambassadeurs.filter(a => a.statut === "En attente").length;
-  const dirsEnAttente = directeurs.filter(d => d.statut === "En attente").length;
+  // ── Stats ───────────────────────────────────────────────
+  const totalFilleulsActifs  = filleuls.filter(f => f.statut !== "Annulé").length;
+  const totalPayes           = filleuls.filter(f => f.statut === "Payé").length;
+  const totalCommissions     = filleuls.filter(f => f.statut === "Payé").reduce((s, f) => s + (Number(f.montant) || 0), 0);
+  const totalAttente         = filleuls.filter(f => ["En attente", "Inscrit"].includes(f.statut)).reduce((s, f) => s + (Number(f.montant) || 0), 0);
+  const ambsEnAttente        = ambassadeurs.filter(a => a.statut === "En attente").length;
+  const dirsEnAttente        = directeurs.filter(d => d.statut === "En attente").length;
+  const filleuslEnAttentePaiement = filleuls.filter(f => ["En attente", "Inscrit"].includes(f.statut));
+  const totalNotifications   = ambsEnAttente + dirsEnAttente + filleuslEnAttentePaiement.length;
 
   const filleulsFiltres = (selectedAmb ? filleuls.filter(f => f.ambassadeur_id === selectedAmb) : filleuls)
     .filter(f => search === "" || `${f.nom} ${f.prenom} ${f.telephone}`.toLowerCase().includes(search.toLowerCase()));
-
   const ambsFiltres = ambassadeurs.filter(a => search === "" || `${a.nom} ${a.prenom} ${a.telephone}`.toLowerCase().includes(search.toLowerCase()));
   const dirsFiltres = directeurs.filter(d => search === "" || `${d.nom} ${d.prenom} ${d.telephone}`.toLowerCase().includes(search.toLowerCase()));
 
   // ════════════════════════════════════════════════════════
-  // ÉCRAN DE CODE SECRET
+  // ÉCRAN CODE SECRET
   // ════════════════════════════════════════════════════════
   if (!authenticated) {
     return (
@@ -158,42 +166,31 @@ export default function AdminPage() {
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
             <div className="w-20 h-20 rounded-2xl mx-auto mb-4 flex items-center justify-center text-4xl"
-              style={{ background: "linear-gradient(135deg, #4B0082, #C9A84C)" }}>
-              🔐
-            </div>
+              style={{ background: "linear-gradient(135deg, #4B0082, #C9A84C)" }}>🔐</div>
             <h1 className="text-2xl font-bold text-white">Espace Admin</h1>
             <p className="text-sm mt-1" style={{ color: "#C9A84C" }}>SBBS — Accès restreint</p>
           </div>
-
           <div className="bg-white/10 backdrop-blur rounded-2xl p-6 border border-white/20">
             <label className="block text-sm font-medium text-white/80 mb-2">Code secret</label>
             <div className="relative mb-4">
-              <input
-                type={showCode ? "text" : "password"}
-                value={code}
+              <input type={showCode ? "text" : "password"} value={code}
                 onChange={e => { setCode(e.target.value); setCodeError(false); }}
                 onKeyDown={e => e.key === "Enter" && handleCodeSubmit()}
                 placeholder="Entrez votre code secret"
                 className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 pr-10"
-                style={{ background: "rgba(255,255,255,0.15)", color: "white", border: codeError ? "1px solid #CC0000" : "1px solid rgba(255,255,255,0.2)" }}
-              />
+                style={{ background: "rgba(255,255,255,0.15)", color: "white", border: codeError ? "1px solid #CC0000" : "1px solid rgba(255,255,255,0.2)" }} />
               <button onClick={() => setShowCode(!showCode)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white text-sm">
                 {showCode ? "🙈" : "👁️"}
               </button>
             </div>
-
-            {codeError && (
-              <p className="text-red-400 text-xs mb-3 text-center">❌ Code incorrect. Réessayez.</p>
-            )}
-
+            {codeError && <p className="text-red-400 text-xs mb-3 text-center">❌ Code incorrect. Réessayez.</p>}
             <button onClick={handleCodeSubmit}
               className="w-full py-3 rounded-xl font-bold text-white transition hover:opacity-90"
               style={{ background: "linear-gradient(135deg, #1A3A6C, #2563EB)" }}>
               Accéder →
             </button>
           </div>
-
           <button onClick={() => router.push("/login")}
             className="w-full text-center text-xs text-white/40 mt-4 hover:text-white/60 transition">
             ← Retour à l'accueil
@@ -203,19 +200,18 @@ export default function AdminPage() {
     );
   }
 
-  // ════════════════════════════════════════════════════════
-  // TABLEAU DE BORD ADMIN
-  // ════════════════════════════════════════════════════════
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
-      <p className="text-sbbs-blue font-semibold animate-pulse">Chargement des données...</p>
+      <p className="text-sbbs-blue font-semibold animate-pulse">Chargement...</p>
     </div>
   );
 
+  // ════════════════════════════════════════════════════════
+  // DASHBOARD ADMIN
+  // ════════════════════════════════════════════════════════
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* Header */}
       <header className="px-6 py-4 flex items-center justify-between shadow-lg"
         style={{ background: "linear-gradient(135deg, #0F0C29, #302B63)" }}>
         <div className="flex items-center gap-3">
@@ -227,9 +223,9 @@ export default function AdminPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {(ambsEnAttente + dirsEnAttente) > 0 && (
+          {totalNotifications > 0 && (
             <div className="flex items-center gap-1.5 bg-red-500/20 border border-red-400/30 rounded-xl py-1 px-2.5">
-              <span className="text-red-400 text-xs font-bold">{ambsEnAttente + dirsEnAttente}</span>
+              <span className="text-red-400 text-xs font-bold">{totalNotifications}</span>
               <span className="text-red-300 text-xs">en attente</span>
             </div>
           )}
@@ -242,7 +238,7 @@ export default function AdminPage() {
 
       <main className="max-w-5xl mx-auto px-4 py-6">
 
-        {/* Stats globales */}
+        {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
           <div className="card border-l-4 border-sbbs-blue text-center py-3">
             <p className="text-3xl font-bold text-sbbs-blue">{ambassadeurs.length}</p>
@@ -252,10 +248,13 @@ export default function AdminPage() {
           <div className="card border-l-4 border-sbbs-gold text-center py-3">
             <p className="text-3xl font-bold text-sbbs-gold">{totalFilleulsActifs}</p>
             <p className="text-xs text-gray-500 mt-1">Filleuls actifs</p>
+            {filleuslEnAttentePaiement.length > 0 && (
+              <p className="text-xs text-orange-600 font-bold">{filleuslEnAttentePaiement.length} à valider</p>
+            )}
           </div>
           <div className="card border-l-4 border-sbbs-red text-center py-3">
             <p className="text-base font-bold text-sbbs-red">{totalAttente.toLocaleString()}</p>
-            <p className="text-xs text-gray-500 mt-1">En attente (FCFA)</p>
+            <p className="text-xs text-gray-500 mt-1">Commissions à valider</p>
           </div>
           <div className="card border-l-4 border-green-500 text-center py-3">
             <p className="text-base font-bold text-green-600">{totalCommissions.toLocaleString()}</p>
@@ -263,7 +262,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Barre de recherche */}
+        {/* Recherche */}
         <div className="mb-4">
           <input value={search} onChange={e => setSearch(e.target.value)}
             placeholder="🔍 Rechercher un nom, téléphone..."
@@ -272,18 +271,18 @@ export default function AdminPage() {
 
         {/* Onglets */}
         <div className="flex gap-2 mb-5 overflow-x-auto pb-1">
-         {([
-            { key: "overview", label: "Vue globale", emoji: "📊", alert: 0 },
-            { key: "ambassadeurs", label: "Ambassadeurs", emoji: "👥", alert: 0 },
-            { key: "directeurs", label: "Directeurs", emoji: "🏫", alert: 0 },
-            { key: "filleuls", label: "Filleuls", emoji: "🎓", alert: 0 },
-            { key: "comptes", label: "Comptes", emoji: "⚙️", alert: ambsEnAttente + dirsEnAttente },
+          {([
+            { key: "overview",     label: "Vue globale",   emoji: "📊", alert: 0 },
+            { key: "ambassadeurs", label: "Ambassadeurs",   emoji: "👥", alert: 0 },
+            { key: "directeurs",   label: "Directeurs",     emoji: "🏫", alert: 0 },
+            { key: "filleuls",     label: "Filleuls",       emoji: "🎓", alert: 0 },
+            { key: "comptes",      label: "Validations",    emoji: "✅", alert: totalNotifications },
           ] as const).map(tab => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key as any)}
               className={`relative text-sm px-4 py-2 rounded-xl font-medium transition flex-shrink-0 ${activeTab === tab.key ? "bg-sbbs-blue text-white shadow-sm" : "bg-white text-gray-600 border border-gray-200 hover:border-sbbs-blue"}`}>
               {tab.emoji} {tab.label}
               {tab.alert > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center font-bold">
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center font-bold">
                   {tab.alert}
                 </span>
               )}
@@ -294,7 +293,7 @@ export default function AdminPage() {
         {/* ── OVERVIEW ── */}
         {activeTab === "overview" && (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="card">
                 <h3 className="font-bold text-sbbs-blue mb-3">📈 Réseau global</h3>
                 <div className="space-y-2 text-sm">
@@ -303,18 +302,22 @@ export default function AdminPage() {
                   <div className="flex justify-between"><span className="text-gray-500">Total filleuls</span><span className="font-bold">{filleuls.length}</span></div>
                   <div className="flex justify-between"><span className="text-gray-500">Filleuls payés</span><span className="font-bold text-green-600">{totalPayes}</span></div>
                   <div className="flex justify-between"><span className="text-gray-500">Taux conversion</span><span className="font-bold text-sbbs-blue">{totalFilleulsActifs > 0 ? Math.round((totalPayes / totalFilleulsActifs) * 100) : 0}%</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500">Commissions totales</span><span className="font-bold text-green-600">{totalCommissions.toLocaleString()} FCFA</span></div>
                 </div>
               </div>
               <div className="card">
                 <h3 className="font-bold text-sbbs-blue mb-3">🏆 Top 5 Ambassadeurs</h3>
                 {ambassadeurs.map(a => ({
-                  ...a,
-                  nb: filleuls.filter(f => f.ambassadeur_id === a.id && f.statut !== "Annulé").length
+                  ...a, nb: filleuls.filter(f => f.ambassadeur_id === a.id && f.statut !== "Annulé").length,
+                  gains: filleuls.filter(f => f.ambassadeur_id === a.id && f.statut === "Payé").reduce((s, f) => s + (Number(f.montant) || 0), 0)
                 })).sort((a, b) => b.nb - a.nb).slice(0, 5).map((a, i) => (
                   <div key={a.id} className="flex items-center gap-2 py-1.5 border-b border-gray-50 last:border-0">
-                    <span className="text-sm w-5">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`}</span>
+                    <span className="text-sm w-5">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i+1}`}</span>
                     <span className="text-sm flex-1 truncate">{a.prenom} {a.nom}</span>
-                    <span className="text-xs font-bold text-sbbs-blue">{a.nb} filleuls</span>
+                    <div className="text-right">
+                      <span className="text-xs font-bold text-sbbs-blue block">{a.nb} filleuls</span>
+                      <span className="text-xs text-green-600">{a.gains.toLocaleString()} FCFA</span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -325,7 +328,7 @@ export default function AdminPage() {
         {/* ── AMBASSADEURS ── */}
         {activeTab === "ambassadeurs" && (
           <div className="space-y-3">
-            <p className="text-sm text-gray-500">{ambsFiltres.length} ambassadeur(s) trouvé(s)</p>
+            <p className="text-sm text-gray-500">{ambsFiltres.length} ambassadeur(s)</p>
             {ambsFiltres.map(a => (
               <div key={a.id} className="card border border-gray-100">
                 <div className="flex items-center gap-3 flex-wrap">
@@ -333,33 +336,28 @@ export default function AdminPage() {
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sbbs-blue">{a.prenom} {a.nom}</p>
                     <p className="text-xs text-gray-500">📞 {a.telephone} · {a.zone} · {a.branche}</p>
-                    <p className="text-xs text-gray-400">Code : {a.code} · {filleuls.filter(f => f.ambassadeur_id === a.id && f.statut !== "Annulé").length} filleuls</p>
+                    <p className="text-xs text-gray-400">
+                      Code : {a.code} · {filleuls.filter(f => f.ambassadeur_id === a.id && f.statut !== "Annulé").length} filleuls
+                      · {filleuls.filter(f => f.ambassadeur_id === a.id && f.statut === "Payé").reduce((s, f) => s + (Number(f.montant)||0), 0).toLocaleString()} FCFA
+                    </p>
                   </div>
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statutColors[a.statut] || "bg-gray-100 text-gray-600"}`}>{a.statut}</span>
                 </div>
                 <div className="flex gap-2 mt-3 flex-wrap">
                   {a.statut === "En attente" && (
                     <button onClick={() => handleUpdateStatutAmb(a.id, "Actif")}
-                      className="text-xs px-3 py-1.5 rounded-xl bg-green-50 text-green-700 font-medium hover:bg-green-100 transition">
-                      ✅ Valider
-                    </button>
+                      className="text-xs px-3 py-1.5 rounded-xl bg-green-50 text-green-700 font-medium hover:bg-green-100 transition">✅ Valider</button>
                   )}
                   {(a.statut === "Actif" || a.statut === "actif") && (
                     <button onClick={() => handleUpdateStatutAmb(a.id, "Suspendu")}
-                      className="text-xs px-3 py-1.5 rounded-xl bg-yellow-50 text-yellow-700 font-medium hover:bg-yellow-100 transition">
-                      🚫 Suspendre
-                    </button>
+                      className="text-xs px-3 py-1.5 rounded-xl bg-yellow-50 text-yellow-700 font-medium hover:bg-yellow-100 transition">🚫 Suspendre</button>
                   )}
                   {(a.statut === "Suspendu" || a.statut === "suspendu") && (
                     <button onClick={() => handleUpdateStatutAmb(a.id, "Actif")}
-                      className="text-xs px-3 py-1.5 rounded-xl bg-blue-50 text-sbbs-blue font-medium hover:bg-blue-100 transition">
-                      🔓 Réactiver
-                    </button>
+                      className="text-xs px-3 py-1.5 rounded-xl bg-blue-50 text-sbbs-blue font-medium hover:bg-blue-100 transition">🔓 Réactiver</button>
                   )}
                   <button onClick={() => handleDeleteAmb(a.id)}
-                    className="text-xs px-3 py-1.5 rounded-xl bg-red-50 text-sbbs-red font-medium hover:bg-red-100 transition">
-                    🗑️ Supprimer
-                  </button>
+                    className="text-xs px-3 py-1.5 rounded-xl bg-red-50 text-sbbs-red font-medium hover:bg-red-100 transition">🗑️ Supprimer</button>
                 </div>
               </div>
             ))}
@@ -369,7 +367,7 @@ export default function AdminPage() {
         {/* ── DIRECTEURS ── */}
         {activeTab === "directeurs" && (
           <div className="space-y-3">
-            <p className="text-sm text-gray-500">{dirsFiltres.length} directeur(s) trouvé(s)</p>
+            <p className="text-sm text-gray-500">{dirsFiltres.length} directeur(s)</p>
             {dirsFiltres.map(d => (
               <div key={d.id} className="card border border-gray-100">
                 <div className="flex items-center gap-3 flex-wrap">
@@ -385,26 +383,18 @@ export default function AdminPage() {
                 <div className="flex gap-2 mt-3 flex-wrap">
                   {d.statut === "En attente" && (
                     <button onClick={() => handleUpdateStatutDir(d.id, "Actif")}
-                      className="text-xs px-3 py-1.5 rounded-xl bg-green-50 text-green-700 font-medium hover:bg-green-100 transition">
-                      ✅ Valider
-                    </button>
+                      className="text-xs px-3 py-1.5 rounded-xl bg-green-50 text-green-700 font-medium hover:bg-green-100 transition">✅ Valider</button>
                   )}
                   {(d.statut === "Actif" || d.statut === "actif") && (
                     <button onClick={() => handleUpdateStatutDir(d.id, "Suspendu")}
-                      className="text-xs px-3 py-1.5 rounded-xl bg-yellow-50 text-yellow-700 font-medium hover:bg-yellow-100 transition">
-                      🚫 Suspendre
-                    </button>
+                      className="text-xs px-3 py-1.5 rounded-xl bg-yellow-50 text-yellow-700 font-medium hover:bg-yellow-100 transition">🚫 Suspendre</button>
                   )}
                   {(d.statut === "Suspendu" || d.statut === "suspendu") && (
                     <button onClick={() => handleUpdateStatutDir(d.id, "Actif")}
-                      className="text-xs px-3 py-1.5 rounded-xl bg-blue-50 text-sbbs-blue font-medium hover:bg-blue-100 transition">
-                      🔓 Réactiver
-                    </button>
+                      className="text-xs px-3 py-1.5 rounded-xl bg-blue-50 text-sbbs-blue font-medium hover:bg-blue-100 transition">🔓 Réactiver</button>
                   )}
                   <button onClick={() => handleDeleteDir(d.id)}
-                    className="text-xs px-3 py-1.5 rounded-xl bg-red-50 text-sbbs-red font-medium hover:bg-red-100 transition">
-                    🗑️ Supprimer
-                  </button>
+                    className="text-xs px-3 py-1.5 rounded-xl bg-red-50 text-sbbs-red font-medium hover:bg-red-100 transition">🗑️ Supprimer</button>
                 </div>
               </div>
             ))}
@@ -421,69 +411,54 @@ export default function AdminPage() {
                 {ambassadeurs.map(a => <option key={a.id} value={a.id}>{a.prenom} {a.nom}</option>)}
               </select>
               <button onClick={() => { setEditingFilleul(null); setShowForm(true); }}
-                className="btn-primary text-sm px-4 py-2 rounded-xl shrink-0">
-                + Ajouter
-              </button>
+                className="btn-primary text-sm px-4 py-2 rounded-xl shrink-0">+ Ajouter</button>
             </div>
             <p className="text-xs text-gray-400 mb-3">{filleulsFiltres.length} filleul(s)</p>
             <div className="space-y-2">
               {filleulsFiltres.length === 0 ? (
-                <div className="card text-center text-gray-400 py-12">
-                  <p className="text-5xl mb-3">🎓</p>
-                  <p>Aucun filleul trouvé.</p>
-                </div>
+                <div className="card text-center text-gray-400 py-12"><p className="text-5xl mb-3">🎓</p><p>Aucun filleul trouvé.</p></div>
               ) : filleulsFiltres.map(f => {
                 const amb = ambassadeurs.find(a => a.id === f.ambassadeur_id);
+                const commissionAuto = calculerCommissionAuto(f.branche_filleul || f.formation, f.type_parrainage);
                 return (
                   <div key={f.id} className="card border border-gray-100">
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-semibold text-sbbs-blue">{f.prenom} {f.nom}</p>
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statutColors[f.statut] || "bg-gray-100 text-gray-600"}`}>{f.statut}</span>
-                          {f.type_parrainage && (
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
-                              {f.type_parrainage === "À chaud" ? "🔥" : "🤝"} {f.type_parrainage}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-gray-500 mt-0.5">📞 {f.telephone}{f.branche_filleul ? ` · 🏫 ${f.branche_filleul}` : ""}{f.montant ? ` · 💰 ${Number(f.montant).toLocaleString()} FCFA` : ""}</p>
-                        <p className="text-xs text-gray-400">Parrain : {amb ? `${amb.prenom} ${amb.nom}` : "-"}{f.date_inscription ? ` · 📅 ${f.date_inscription}` : ""}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold text-sbbs-blue">{f.prenom} {f.nom}</p>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statutColors[f.statut] || "bg-gray-100 text-gray-600"}`}>{f.statut}</span>
+                        {f.type_parrainage && <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{f.type_parrainage === "À chaud" ? "🔥" : "🤝"} {f.type_parrainage}</span>}
                       </div>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        📞 {f.telephone}{f.branche_filleul ? ` · 🏫 ${f.branche_filleul}` : ""}
+                        {f.montant ? ` · 💰 ${Number(f.montant).toLocaleString()} FCFA` : commissionAuto > 0 ? ` · 💡 ${commissionAuto.toLocaleString()} FCFA (calculé)` : ""}
+                      </p>
+                      <p className="text-xs text-gray-400">Parrain : {amb ? `${amb.prenom} ${amb.nom}` : "-"}{f.date_inscription ? ` · 📅 ${f.date_inscription}` : ""}</p>
                     </div>
                     <div className="flex gap-2 mt-3 flex-wrap items-center">
-  {f.montant ? (
-    <span className="text-xs font-bold text-green-700 bg-green-50 px-2 py-1 rounded-lg">
-      💰 {Number(f.montant).toLocaleString()} FCFA
-    </span>
-  ) : (
-    <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded-lg">
-      💰 Commission non définie
-    </span>
-  )}
-  <button
-    onClick={() => {
-      const val = prompt("Montant commission (FCFA) :", String(f.montant || ""));
-      if (val !== null) {
-        supabase.from("filleuls").update({ montant: Number(val) }).eq("id", f.id).then(() => fetchData());
-      }
-    }}
-    className="text-xs px-3 py-1.5 rounded-xl bg-green-50 text-green-700 font-medium hover:bg-green-100 transition">
-    ✏️ Modifier commission
-  </button>
-  <select value={f.statut}
-                        onChange={e => handleUpdateStatutFilleul(f.id, e.target.value)}
+                      {f.statut !== "Payé" && (
+                        <button onClick={() => handleValiderPaiement(f)}
+                          className="text-xs px-3 py-1.5 rounded-xl bg-green-500 text-white font-bold hover:bg-green-600 transition">
+                          ✅ Valider paiement {commissionAuto > 0 ? `(${commissionAuto.toLocaleString()} FCFA)` : ""}
+                        </button>
+                      )}
+                      {f.montant ? (
+                        <span className="text-xs font-bold text-green-700 bg-green-50 px-2 py-1 rounded-lg">💰 {Number(f.montant).toLocaleString()} FCFA</span>
+                      ) : null}
+                      <button onClick={() => {
+                        const val = prompt("Montant commission (FCFA) :", String(f.montant || commissionAuto || ""));
+                        if (val !== null) supabase.from("filleuls").update({ montant: Number(val) }).eq("id", f.id).then(() => fetchData());
+                      }} className="text-xs px-3 py-1.5 rounded-xl bg-blue-50 text-sbbs-blue font-medium hover:bg-blue-100 transition">
+                        ✏️ Commission
+                      </button>
+                      <select value={f.statut}
+                        onChange={e => handleUpdateStatutFilleul(f.id, e.target.value, f)}
                         className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-sbbs-blue">
                         {["En attente", "Inscrit", "Payé", "Annulé"].map(s => <option key={s} value={s}>{s}</option>)}
                       </select>
                       <button onClick={() => { setEditingFilleul(f); setShowForm(true); }}
-                        className="text-xs px-3 py-1.5 rounded-xl bg-blue-50 text-sbbs-blue font-medium hover:bg-blue-100 transition">
-                        ✏️ Modifier
-                      </button>
+                        className="text-xs px-3 py-1.5 rounded-xl bg-gray-50 text-gray-600 font-medium hover:bg-gray-100 transition">✏️ Modifier</button>
                       <button onClick={() => handleDeleteFilleul(f.id)}
-                        className="text-xs px-3 py-1.5 rounded-xl bg-red-50 text-sbbs-red font-medium hover:bg-red-100 transition">
-                        🗑️ Supprimer
-                      </button>
+                        className="text-xs px-3 py-1.5 rounded-xl bg-red-50 text-sbbs-red font-medium hover:bg-red-100 transition">🗑️</button>
                     </div>
                   </div>
                 );
@@ -492,12 +467,55 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ── COMPTES ── */}
+        {/* ── VALIDATIONS ── */}
         {activeTab === "comptes" && (
-          <div className="space-y-4">
+          <div className="space-y-6">
+
+            {/* Filleuls en attente de paiement */}
+            {filleuslEnAttentePaiement.length > 0 && (
+              <div>
+                <h3 className="font-bold text-orange-700 mb-3">
+                  💰 Filleuls en attente de validation paiement ({filleuslEnAttentePaiement.length})
+                </h3>
+                <div className="space-y-2">
+                  {filleuslEnAttentePaiement.map(f => {
+                    const amb = ambassadeurs.find(a => a.id === f.ambassadeur_id);
+                    const commissionAuto = calculerCommissionAuto(f.branche_filleul || f.formation, f.type_parrainage);
+                    return (
+                      <div key={f.id} className="card border border-orange-200 bg-orange-50/30">
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="font-semibold text-sbbs-blue">{f.prenom} {f.nom}</p>
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statutColors[f.statut] || "bg-gray-100 text-gray-600"}`}>{f.statut}</span>
+                              {f.type_parrainage && <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{f.type_parrainage === "À chaud" ? "🔥" : "🤝"} {f.type_parrainage}</span>}
+                            </div>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              🏫 {f.branche_filleul || f.formation || "-"} · 
+                              Parrain : {amb ? `${amb.prenom} ${amb.nom}` : "-"}
+                            </p>
+                            {commissionAuto > 0 && (
+                              <p className="text-xs font-bold text-green-700 mt-0.5">
+                                💡 Commission calculée : {commissionAuto.toLocaleString()} FCFA
+                              </p>
+                            )}
+                          </div>
+                          <button onClick={() => handleValiderPaiement(f)}
+                            className="text-xs px-4 py-2 rounded-xl bg-green-500 text-white font-bold hover:bg-green-600 transition shrink-0">
+                            ✅ Valider {commissionAuto > 0 ? `(${commissionAuto.toLocaleString()} F)` : ""}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Ambassadeurs en attente */}
             {ambsEnAttente > 0 && (
               <div>
-                <h3 className="font-bold text-yellow-700 mb-3">⏳ Ambassadeurs en attente de validation ({ambsEnAttente})</h3>
+                <h3 className="font-bold text-yellow-700 mb-3">⏳ Ambassadeurs en attente ({ambsEnAttente})</h3>
                 <div className="space-y-2">
                   {ambassadeurs.filter(a => a.statut === "En attente").map(a => (
                     <div key={a.id} className="card border border-yellow-200 bg-yellow-50/30">
@@ -510,13 +528,9 @@ export default function AdminPage() {
                         </div>
                         <div className="flex gap-2">
                           <button onClick={() => handleUpdateStatutAmb(a.id, "Actif")}
-                            className="text-xs px-3 py-2 rounded-xl bg-green-500 text-white font-bold hover:bg-green-600 transition">
-                            ✅ Valider
-                          </button>
+                            className="text-xs px-3 py-2 rounded-xl bg-green-500 text-white font-bold hover:bg-green-600 transition">✅ Valider</button>
                           <button onClick={() => handleDeleteAmb(a.id)}
-                            className="text-xs px-3 py-2 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition">
-                            ❌ Rejeter
-                          </button>
+                            className="text-xs px-3 py-2 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition">❌ Rejeter</button>
                         </div>
                       </div>
                     </div>
@@ -525,9 +539,10 @@ export default function AdminPage() {
               </div>
             )}
 
+            {/* Directeurs en attente */}
             {dirsEnAttente > 0 && (
               <div>
-                <h3 className="font-bold text-yellow-700 mb-3">⏳ Directeurs en attente de validation ({dirsEnAttente})</h3>
+                <h3 className="font-bold text-yellow-700 mb-3">⏳ Directeurs en attente ({dirsEnAttente})</h3>
                 <div className="space-y-2">
                   {directeurs.filter(d => d.statut === "En attente").map(d => (
                     <div key={d.id} className="card border border-yellow-200 bg-yellow-50/30">
@@ -541,13 +556,9 @@ export default function AdminPage() {
                         </div>
                         <div className="flex gap-2">
                           <button onClick={() => handleUpdateStatutDir(d.id, "Actif")}
-                            className="text-xs px-3 py-2 rounded-xl bg-green-500 text-white font-bold hover:bg-green-600 transition">
-                            ✅ Valider
-                          </button>
+                            className="text-xs px-3 py-2 rounded-xl bg-green-500 text-white font-bold hover:bg-green-600 transition">✅ Valider</button>
                           <button onClick={() => handleDeleteDir(d.id)}
-                            className="text-xs px-3 py-2 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition">
-                            ❌ Rejeter
-                          </button>
+                            className="text-xs px-3 py-2 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition">❌ Rejeter</button>
                         </div>
                       </div>
                     </div>
@@ -556,10 +567,10 @@ export default function AdminPage() {
               </div>
             )}
 
-            {ambsEnAttente === 0 && dirsEnAttente === 0 && (
+            {filleuslEnAttentePaiement.length === 0 && ambsEnAttente === 0 && dirsEnAttente === 0 && (
               <div className="card text-center text-gray-400 py-12">
                 <p className="text-5xl mb-3">✅</p>
-                <p className="font-medium">Aucun compte en attente de validation.</p>
+                <p className="font-medium">Tout est à jour — aucune validation en attente.</p>
               </div>
             )}
           </div>
@@ -567,19 +578,14 @@ export default function AdminPage() {
 
       </main>
 
-      {/* Modal filleul */}
       {showForm && (
         <FilleulFormModal
           initial={editingFilleul ? {
-            nom: editingFilleul.nom,
-            prenom: editingFilleul.prenom,
-            telephone: editingFilleul.telephone,
-            email: editingFilleul.email,
-            formation: editingFilleul.formation,
-            branche_filleul: editingFilleul.branche_filleul,
+            nom: editingFilleul.nom, prenom: editingFilleul.prenom,
+            telephone: editingFilleul.telephone, email: editingFilleul.email,
+            formation: editingFilleul.formation, branche_filleul: editingFilleul.branche_filleul,
             type_parrainage: (editingFilleul.type_parrainage as any) || "Assisté",
-            montant: String(editingFilleul.montant || ""),
-            statut: editingFilleul.statut,
+            montant: String(editingFilleul.montant || ""), statut: editingFilleul.statut,
             date_inscription: editingFilleul.date_inscription,
           } : undefined}
           onSave={handleSaveFilleul}
