@@ -36,8 +36,13 @@ export default function DevenirAmbassadeurPage() {
       setForm(prev => ({ ...prev, [key]: e.target.value }));
 
   const insertAmbassadeur = async (userId: string) => {
-    const initiales = `${form.prenom[0]}${form.nom[0]}`.toUpperCase();
-    const code = `AMB-${initiales}-${Date.now().toString().slice(-4)}`;
+   const annee = new Date().getFullYear();
+const { count } = await supabase
+  .from("ambassadeurs")
+  .select("*", { count: "exact", head: true })
+  .like("code", `CI-AMB-${annee}%`);
+const sequence = String((count || 0) + 1).padStart(4, "0");
+const code = `CI-AMB-${annee}${sequence}`;
 
     const { error: dbError } = await supabase.from("ambassadeurs").insert({
       user_id: userId,
